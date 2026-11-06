@@ -1,0 +1,2008 @@
+{
+  "meta": {
+    "source": "World Happiness Report (Gallup World Poll)",
+    "file": "world-happiness-2019-2025.csv",
+    "survey_year": 2025,
+    "report_edition": "WHR 2026",
+    "generated_by": "prep_data.py"
+  },
+  "chart1_ranked_bar": {
+    "year": 2025,
+    "total_ranked": 147,
+    "highlight": [
+      "Costa Rica"
+    ],
+    "top10": [
+      {
+        "rank": 1,
+        "country": "Finland",
+        "region": "Northern Europe",
+        "score": 7.764,
+        "change_since_2019": -0.045
+      },
+      {
+        "rank": 2,
+        "country": "Iceland",
+        "region": "Northern Europe",
+        "score": 7.54,
+        "change_since_2019": 0.036
+      },
+      {
+        "rank": 3,
+        "country": "Denmark",
+        "region": "Northern Europe",
+        "score": 7.539,
+        "change_since_2019": -0.107
+      },
+      {
+        "rank": 4,
+        "country": "Costa Rica",
+        "region": "Latin America and the Caribbean",
+        "score": 7.439,
+        "change_since_2019": 0.318
+      },
+      {
+        "rank": 5,
+        "country": "Sweden",
+        "region": "Northern Europe",
+        "score": 7.255,
+        "change_since_2019": -0.098
+      },
+      {
+        "rank": 6,
+        "country": "Norway",
+        "region": "Northern Europe",
+        "score": 7.242,
+        "change_since_2019": -0.246
+      },
+      {
+        "rank": 7,
+        "country": "Netherlands",
+        "region": "Western Europe",
+        "score": 7.223,
+        "change_since_2019": -0.226
+      },
+      {
+        "rank": 8,
+        "country": "Israel",
+        "region": "Western Asia",
+        "score": 7.187,
+        "change_since_2019": 0.058
+      },
+      {
+        "rank": 9,
+        "country": "Luxembourg",
+        "region": "Western Europe",
+        "score": 7.063,
+        "change_since_2019": -0.175
+      },
+      {
+        "rank": 10,
+        "country": "Switzerland",
+        "region": "Western Europe",
+        "score": 7.018,
+        "change_since_2019": -0.542
+      }
+    ],
+    "bottom10": [
+      {
+        "rank": 138,
+        "country": "Tanzania",
+        "region": "Sub-Saharan Africa",
+        "score": 3.902,
+        "change_since_2019": 0.426
+      },
+      {
+        "rank": 139,
+        "country": "Egypt",
+        "region": "Northern Africa",
+        "score": 3.862,
+        "change_since_2019": -0.289
+      },
+      {
+        "rank": 140,
+        "country": "DR Congo",
+        "region": "Sub-Saharan Africa",
+        "score": 3.761,
+        "change_since_2019": -0.55
+      },
+      {
+        "rank": 141,
+        "country": "Lebanon",
+        "region": "Western Asia",
+        "score": 3.723,
+        "change_since_2019": -1.049
+      },
+      {
+        "rank": 142,
+        "country": "Yemen",
+        "region": "Western Asia",
+        "score": 3.532,
+        "change_since_2019": 0.005
+      },
+      {
+        "rank": 143,
+        "country": "Botswana",
+        "region": "Sub-Saharan Africa",
+        "score": 3.464,
+        "change_since_2019": -0.015
+      },
+      {
+        "rank": 144,
+        "country": "Zimbabwe",
+        "region": "Sub-Saharan Africa",
+        "score": 3.346,
+        "change_since_2019": 0.047
+      },
+      {
+        "rank": 145,
+        "country": "Malawi",
+        "region": "Sub-Saharan Africa",
+        "score": 3.284,
+        "change_since_2019": -0.254
+      },
+      {
+        "rank": 146,
+        "country": "Sierra Leone",
+        "region": "Sub-Saharan Africa",
+        "score": 3.251,
+        "change_since_2019": -0.675
+      },
+      {
+        "rank": 147,
+        "country": "Afghanistan",
+        "region": "Southern Asia",
+        "score": 1.446,
+        "change_since_2019": -1.121
+      }
+    ]
+  },
+  "chart2_lines": {
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "y_axis": {
+      "min": 0,
+      "max": 10,
+      "ticks": [
+        0,
+        2,
+        4,
+        6,
+        8,
+        10
+      ]
+    },
+    "context_series": [
+      {
+        "country": "Albania",
+        "scores": [
+          4.883,
+          5.117,
+          5.199,
+          5.277,
+          5.304,
+          5.411,
+          5.662
+        ]
+      },
+      {
+        "country": "Algeria",
+        "scores": [
+          5.005,
+          4.887,
+          5.122,
+          5.329,
+          5.364,
+          5.571,
+          5.714
+        ]
+      },
+      {
+        "country": "Argentina",
+        "scores": [
+          5.975,
+          5.929,
+          5.967,
+          6.024,
+          6.188,
+          6.397,
+          6.43
+        ]
+      },
+      {
+        "country": "Australia",
+        "scores": [
+          7.223,
+          7.183,
+          7.162,
+          7.095,
+          7.057,
+          6.974,
+          6.916
+        ]
+      },
+      {
+        "country": "Austria",
+        "scores": [
+          7.294,
+          7.268,
+          7.163,
+          7.097,
+          6.905,
+          6.81,
+          6.845
+        ]
+      },
+      {
+        "country": "Bangladesh",
+        "scores": [
+          4.833,
+          5.025,
+          5.155,
+          4.282,
+          3.886,
+          3.851,
+          4.319
+        ]
+      },
+      {
+        "country": "Belgium",
+        "scores": [
+          6.864,
+          6.834,
+          6.805,
+          6.859,
+          6.894,
+          6.91,
+          6.926
+        ]
+      },
+      {
+        "country": "Bolivia",
+        "scores": [
+          5.747,
+          5.716,
+          5.6,
+          5.684,
+          5.784,
+          5.868,
+          5.835
+        ]
+      },
+      {
+        "country": "Bosnia and Herzegovina",
+        "scores": [
+          5.674,
+          5.813,
+          5.768,
+          5.633,
+          5.877,
+          6.136,
+          6.381
+        ]
+      },
+      {
+        "country": "Botswana",
+        "scores": [
+          3.479,
+          3.467,
+          3.471,
+          3.435,
+          3.383,
+          3.438,
+          3.464
+        ]
+      },
+      {
+        "country": "Brazil",
+        "scores": [
+          6.376,
+          6.33,
+          6.293,
+          6.125,
+          6.272,
+          6.494,
+          6.634
+        ]
+      },
+      {
+        "country": "Bulgaria",
+        "scores": [
+          5.102,
+          5.266,
+          5.371,
+          5.466,
+          5.463,
+          5.554,
+          5.703
+        ]
+      },
+      {
+        "country": "Burkina Faso",
+        "scores": [
+          4.769,
+          4.834,
+          4.67,
+          4.638,
+          4.548,
+          4.383,
+          4.455
+        ]
+      },
+      {
+        "country": "Cambodia",
+        "scores": [
+          4.848,
+          4.83,
+          4.64,
+          4.393,
+          4.341,
+          4.341,
+          4.462
+        ]
+      },
+      {
+        "country": "Cameroon",
+        "scores": [
+          5.085,
+          5.142,
+          5.048,
+          4.973,
+          4.874,
+          4.887,
+          5.083
+        ]
+      },
+      {
+        "country": "Canada",
+        "scores": [
+          7.232,
+          7.103,
+          7.025,
+          6.961,
+          6.9,
+          6.803,
+          6.741
+        ]
+      },
+      {
+        "country": "Chad",
+        "scores": [
+          4.423,
+          4.355,
+          4.251,
+          4.397,
+          4.471,
+          4.384,
+          4.385
+        ]
+      },
+      {
+        "country": "Chile",
+        "scores": [
+          6.228,
+          6.172,
+          6.172,
+          6.334,
+          6.36,
+          6.361,
+          6.302
+        ]
+      },
+      {
+        "country": "Colombia",
+        "scores": [
+          6.163,
+          6.012,
+          5.781,
+          5.63,
+          5.695,
+          6.004,
+          6.04
+        ]
+      },
+      {
+        "country": "Comoros",
+        "scores": [
+          4.289,
+          4.289,
+          4.609,
+          3.545,
+          3.566,
+          3.754,
+          3.925
+        ]
+      },
+      {
+        "country": "Costa Rica",
+        "scores": [
+          7.121,
+          7.069,
+          6.582,
+          6.609,
+          6.955,
+          7.274,
+          7.439
+        ]
+      },
+      {
+        "country": "Croatia",
+        "scores": [
+          5.505,
+          5.882,
+          6.125,
+          6.125,
+          5.942,
+          5.87,
+          6.009
+        ]
+      },
+      {
+        "country": "Cyprus",
+        "scores": [
+          6.159,
+          6.223,
+          6.221,
+          6.13,
+          6.068,
+          5.942,
+          6.126
+        ]
+      },
+      {
+        "country": "Czechia",
+        "scores": [
+          6.911,
+          6.965,
+          6.92,
+          6.845,
+          6.822,
+          6.775,
+          6.821
+        ]
+      },
+      {
+        "country": "Côte d’Ivoire",
+        "scores": [
+          5.233,
+          5.306,
+          5.235,
+          5.053,
+          5.08,
+          5.102,
+          5.148
+        ]
+      },
+      {
+        "country": "Denmark",
+        "scores": [
+          7.646,
+          7.62,
+          7.636,
+          7.586,
+          7.583,
+          7.521,
+          7.539
+        ]
+      },
+      {
+        "country": "Dominican Republic",
+        "scores": [
+          5.689,
+          5.545,
+          5.737,
+          5.569,
+          5.823,
+          5.846,
+          6.093
+        ]
+      },
+      {
+        "country": "Ecuador",
+        "scores": [
+          5.925,
+          5.764,
+          5.533,
+          5.559,
+          5.725,
+          5.965,
+          6.144
+        ]
+      },
+      {
+        "country": "Egypt",
+        "scores": [
+          4.151,
+          4.283,
+          4.288,
+          4.17,
+          3.977,
+          3.817,
+          3.862
+        ]
+      },
+      {
+        "country": "El Salvador",
+        "scores": [
+          6.348,
+          6.061,
+          6.12,
+          6.122,
+          6.469,
+          6.492,
+          6.578
+        ]
+      },
+      {
+        "country": "Estonia",
+        "scores": [
+          6.022,
+          6.189,
+          6.341,
+          6.455,
+          6.448,
+          6.417,
+          6.41
+        ]
+      },
+      {
+        "country": "Ethiopia",
+        "scores": [
+          4.186,
+          4.275,
+          4.241,
+          4.091,
+          3.861,
+          3.898,
+          3.985
+        ]
+      },
+      {
+        "country": "Finland",
+        "scores": [
+          7.809,
+          7.842,
+          7.821,
+          7.804,
+          7.741,
+          7.736,
+          7.764
+        ]
+      },
+      {
+        "country": "France",
+        "scores": [
+          6.664,
+          6.69,
+          6.687,
+          6.661,
+          6.609,
+          6.593,
+          6.586
+        ]
+      },
+      {
+        "country": "Gabon",
+        "scores": [
+          4.829,
+          4.852,
+          4.958,
+          5.035,
+          5.106,
+          5.12,
+          5.167
+        ]
+      },
+      {
+        "country": "Gambia",
+        "scores": [
+          4.751,
+          5.051,
+          5.164,
+          4.279,
+          4.485,
+          4.423,
+          4.306
+        ]
+      },
+      {
+        "country": "Georgia",
+        "scores": [
+          4.673,
+          4.891,
+          4.973,
+          5.109,
+          5.185,
+          5.4,
+          5.517
+        ]
+      },
+      {
+        "country": "Germany",
+        "scores": [
+          7.076,
+          7.155,
+          7.034,
+          6.892,
+          6.719,
+          6.753,
+          6.882
+        ]
+      },
+      {
+        "country": "Ghana",
+        "scores": [
+          5.148,
+          5.088,
+          4.872,
+          4.605,
+          4.289,
+          4.34,
+          4.554
+        ]
+      },
+      {
+        "country": "Greece",
+        "scores": [
+          5.515,
+          5.723,
+          5.948,
+          5.931,
+          5.934,
+          5.776,
+          5.697
+        ]
+      },
+      {
+        "country": "Guatemala",
+        "scores": [
+          6.399,
+          6.435,
+          6.262,
+          6.15,
+          6.287,
+          6.362,
+          6.533
+        ]
+      },
+      {
+        "country": "Guinea",
+        "scores": [
+          4.949,
+          4.984,
+          4.891,
+          5.072,
+          5.023,
+          4.929,
+          4.609
+        ]
+      },
+      {
+        "country": "Honduras",
+        "scores": [
+          5.953,
+          5.919,
+          6.022,
+          6.023,
+          5.968,
+          5.964,
+          6.096
+        ]
+      },
+      {
+        "country": "Hong Kong SAR of China",
+        "scores": [
+          5.51,
+          5.477,
+          5.425,
+          5.308,
+          5.316,
+          5.491,
+          5.569
+        ]
+      },
+      {
+        "country": "Hungary",
+        "scores": [
+          6.0,
+          5.992,
+          6.086,
+          6.041,
+          6.017,
+          5.915,
+          5.937
+        ]
+      },
+      {
+        "country": "Iceland",
+        "scores": [
+          7.504,
+          7.554,
+          7.557,
+          7.53,
+          7.525,
+          7.515,
+          7.54
+        ]
+      },
+      {
+        "country": "Indonesia",
+        "scores": [
+          5.286,
+          5.345,
+          5.24,
+          5.277,
+          5.568,
+          5.617,
+          5.617
+        ]
+      },
+      {
+        "country": "Iran",
+        "scores": [
+          4.672,
+          4.721,
+          4.888,
+          4.876,
+          4.923,
+          5.093,
+          5.151
+        ]
+      },
+      {
+        "country": "Iraq",
+        "scores": [
+          4.785,
+          4.854,
+          4.941,
+          4.941,
+          5.166,
+          4.976,
+          5.212
+        ]
+      },
+      {
+        "country": "Ireland",
+        "scores": [
+          7.094,
+          7.085,
+          7.041,
+          6.911,
+          6.838,
+          6.889,
+          6.928
+        ]
+      },
+      {
+        "country": "Israel",
+        "scores": [
+          7.129,
+          7.157,
+          7.364,
+          7.473,
+          7.341,
+          7.234,
+          7.187
+        ]
+      },
+      {
+        "country": "Italy",
+        "scores": [
+          6.387,
+          6.483,
+          6.467,
+          6.405,
+          6.324,
+          6.415,
+          6.574
+        ]
+      },
+      {
+        "country": "Jamaica",
+        "scores": [
+          5.89,
+          6.309,
+          5.85,
+          5.703,
+          5.842,
+          5.87,
+          6.305
+        ]
+      },
+      {
+        "country": "Japan",
+        "scores": [
+          5.871,
+          5.94,
+          6.039,
+          6.129,
+          6.06,
+          6.147,
+          6.13
+        ]
+      },
+      {
+        "country": "Jordan",
+        "scores": [
+          4.633,
+          4.395,
+          4.152,
+          4.12,
+          4.186,
+          4.31,
+          4.478
+        ]
+      },
+      {
+        "country": "Kazakhstan",
+        "scores": [
+          6.058,
+          6.152,
+          6.234,
+          6.144,
+          6.188,
+          6.378,
+          6.633
+        ]
+      },
+      {
+        "country": "Kenya",
+        "scores": [
+          4.583,
+          4.607,
+          4.543,
+          4.487,
+          4.47,
+          4.51,
+          4.674
+        ]
+      },
+      {
+        "country": "Kosovo",
+        "scores": [
+          6.325,
+          6.372,
+          6.455,
+          6.368,
+          6.561,
+          6.659,
+          6.91
+        ]
+      },
+      {
+        "country": "Kyrgyzstan",
+        "scores": [
+          5.542,
+          5.744,
+          5.828,
+          5.825,
+          5.714,
+          5.858,
+          6.049
+        ]
+      },
+      {
+        "country": "Lao PDR",
+        "scores": [
+          4.889,
+          5.03,
+          5.14,
+          5.111,
+          5.139,
+          5.301,
+          5.515
+        ]
+      },
+      {
+        "country": "Latvia",
+        "scores": [
+          5.95,
+          6.032,
+          6.18,
+          6.213,
+          6.234,
+          6.207,
+          6.365
+        ]
+      },
+      {
+        "country": "Liberia",
+        "scores": [
+          4.558,
+          4.625,
+          5.122,
+          4.042,
+          4.269,
+          4.277,
+          4.28
+        ]
+      },
+      {
+        "country": "Lithuania",
+        "scores": [
+          6.215,
+          6.255,
+          6.446,
+          6.763,
+          6.818,
+          6.829,
+          6.704
+        ]
+      },
+      {
+        "country": "Luxembourg",
+        "scores": [
+          7.238,
+          7.324,
+          7.404,
+          7.228,
+          7.122,
+          7.122,
+          7.063
+        ]
+      },
+      {
+        "country": "Madagascar",
+        "scores": [
+          4.166,
+          4.208,
+          4.339,
+          4.019,
+          4.228,
+          4.157,
+          4.174
+        ]
+      },
+      {
+        "country": "Malawi",
+        "scores": [
+          3.538,
+          3.6,
+          3.75,
+          3.495,
+          3.421,
+          3.26,
+          3.284
+        ]
+      },
+      {
+        "country": "Malaysia",
+        "scores": [
+          5.384,
+          5.384,
+          5.711,
+          6.012,
+          5.975,
+          5.955,
+          6.005
+        ]
+      },
+      {
+        "country": "Mali",
+        "scores": [
+          4.729,
+          4.723,
+          4.479,
+          4.198,
+          4.232,
+          4.345,
+          4.588
+        ]
+      },
+      {
+        "country": "Malta",
+        "scores": [
+          6.773,
+          6.602,
+          6.447,
+          6.3,
+          6.346,
+          6.316,
+          6.436
+        ]
+      },
+      {
+        "country": "Mauritania",
+        "scores": [
+          4.375,
+          4.227,
+          4.153,
+          4.724,
+          4.505,
+          4.542,
+          4.473
+        ]
+      },
+      {
+        "country": "Mauritius",
+        "scores": [
+          6.101,
+          6.049,
+          6.071,
+          5.902,
+          5.816,
+          5.832,
+          5.939
+        ]
+      },
+      {
+        "country": "Mexico",
+        "scores": [
+          6.465,
+          6.317,
+          6.128,
+          6.33,
+          6.678,
+          6.979,
+          6.972
+        ]
+      },
+      {
+        "country": "Mongolia",
+        "scores": [
+          5.456,
+          5.677,
+          5.761,
+          5.84,
+          5.696,
+          5.833,
+          5.936
+        ]
+      },
+      {
+        "country": "Montenegro",
+        "scores": [
+          5.546,
+          5.581,
+          5.547,
+          5.722,
+          5.707,
+          5.877,
+          6.139
+        ]
+      },
+      {
+        "country": "Morocco",
+        "scores": [
+          5.095,
+          4.918,
+          5.06,
+          4.903,
+          4.795,
+          4.622,
+          4.646
+        ]
+      },
+      {
+        "country": "Mozambique",
+        "scores": [
+          4.624,
+          4.794,
+          5.048,
+          4.954,
+          5.216,
+          5.19,
+          5.336
+        ]
+      },
+      {
+        "country": "Myanmar",
+        "scores": [
+          4.308,
+          4.426,
+          4.394,
+          4.372,
+          4.354,
+          4.321,
+          4.287
+        ]
+      },
+      {
+        "country": "Namibia",
+        "scores": [
+          4.571,
+          4.574,
+          4.459,
+          4.631,
+          4.832,
+          4.911,
+          4.781
+        ]
+      },
+      {
+        "country": "Nepal",
+        "scores": [
+          5.137,
+          5.269,
+          5.377,
+          5.36,
+          5.158,
+          5.311,
+          5.147
+        ]
+      },
+      {
+        "country": "Netherlands",
+        "scores": [
+          7.449,
+          7.464,
+          7.415,
+          7.403,
+          7.319,
+          7.306,
+          7.223
+        ]
+      },
+      {
+        "country": "New Zealand",
+        "scores": [
+          7.3,
+          7.277,
+          7.2,
+          7.123,
+          7.029,
+          6.952,
+          6.995
+        ]
+      },
+      {
+        "country": "Nicaragua",
+        "scores": [
+          6.137,
+          5.972,
+          6.165,
+          6.259,
+          6.284,
+          6.33,
+          6.301
+        ]
+      },
+      {
+        "country": "Niger",
+        "scores": [
+          4.91,
+          5.074,
+          5.003,
+          4.501,
+          4.556,
+          4.725,
+          4.94
+        ]
+      },
+      {
+        "country": "Nigeria",
+        "scores": [
+          4.724,
+          4.759,
+          4.552,
+          4.981,
+          4.881,
+          4.885,
+          4.788
+        ]
+      },
+      {
+        "country": "North Macedonia",
+        "scores": [
+          5.16,
+          5.101,
+          5.199,
+          5.254,
+          5.369,
+          5.503,
+          5.719
+        ]
+      },
+      {
+        "country": "Norway",
+        "scores": [
+          7.488,
+          7.392,
+          7.365,
+          7.315,
+          7.302,
+          7.262,
+          7.242
+        ]
+      },
+      {
+        "country": "Panama",
+        "scores": [
+          6.305,
+          6.18,
+          6.309,
+          6.265,
+          6.358,
+          6.407,
+          6.547
+        ]
+      },
+      {
+        "country": "Paraguay",
+        "scores": [
+          5.692,
+          5.653,
+          5.578,
+          5.738,
+          5.977,
+          6.172,
+          6.198
+        ]
+      },
+      {
+        "country": "Peru",
+        "scores": [
+          5.797,
+          5.84,
+          5.559,
+          5.526,
+          5.841,
+          5.947,
+          5.974
+        ]
+      },
+      {
+        "country": "Philippines",
+        "scores": [
+          6.006,
+          5.88,
+          5.904,
+          5.523,
+          6.048,
+          6.107,
+          6.206
+        ]
+      },
+      {
+        "country": "Poland",
+        "scores": [
+          6.186,
+          6.166,
+          6.123,
+          6.26,
+          6.442,
+          6.673,
+          6.768
+        ]
+      },
+      {
+        "country": "Portugal",
+        "scores": [
+          5.911,
+          5.929,
+          6.016,
+          5.968,
+          6.03,
+          6.013,
+          6.029
+        ]
+      },
+      {
+        "country": "Republic of Korea",
+        "scores": [
+          5.872,
+          5.845,
+          5.935,
+          5.951,
+          6.058,
+          6.038,
+          6.04
+        ]
+      },
+      {
+        "country": "Republic of Moldova",
+        "scores": [
+          5.608,
+          5.766,
+          5.857,
+          5.819,
+          5.816,
+          5.819,
+          5.851
+        ]
+      },
+      {
+        "country": "Romania",
+        "scores": [
+          6.124,
+          6.14,
+          6.477,
+          6.589,
+          6.491,
+          6.563,
+          6.629
+        ]
+      },
+      {
+        "country": "Russian Federation",
+        "scores": [
+          5.546,
+          5.477,
+          5.459,
+          5.661,
+          5.785,
+          5.945,
+          5.834
+        ]
+      },
+      {
+        "country": "Saudi Arabia",
+        "scores": [
+          6.406,
+          6.494,
+          6.523,
+          6.463,
+          6.594,
+          6.6,
+          6.817
+        ]
+      },
+      {
+        "country": "Senegal",
+        "scores": [
+          4.981,
+          5.132,
+          5.046,
+          4.855,
+          4.969,
+          4.856,
+          4.787
+        ]
+      },
+      {
+        "country": "Sierra Leone",
+        "scores": [
+          3.926,
+          3.849,
+          3.574,
+          3.138,
+          3.245,
+          2.998,
+          3.251
+        ]
+      },
+      {
+        "country": "Singapore",
+        "scores": [
+          6.377,
+          6.377,
+          6.48,
+          6.587,
+          6.523,
+          6.565,
+          6.585
+        ]
+      },
+      {
+        "country": "Slovakia",
+        "scores": [
+          6.281,
+          6.331,
+          6.391,
+          6.469,
+          6.257,
+          6.221,
+          6.255
+        ]
+      },
+      {
+        "country": "Slovenia",
+        "scores": [
+          6.363,
+          6.461,
+          6.63,
+          6.65,
+          6.743,
+          6.792,
+          6.868
+        ]
+      },
+      {
+        "country": "South Africa",
+        "scores": [
+          4.814,
+          4.956,
+          5.194,
+          5.275,
+          5.422,
+          5.213,
+          5.009
+        ]
+      },
+      {
+        "country": "Spain",
+        "scores": [
+          6.401,
+          6.491,
+          6.476,
+          6.436,
+          6.421,
+          6.466,
+          6.54
+        ]
+      },
+      {
+        "country": "Sri Lanka",
+        "scores": [
+          4.327,
+          4.325,
+          4.362,
+          4.442,
+          3.898,
+          3.891,
+          4.013
+        ]
+      },
+      {
+        "country": "Sweden",
+        "scores": [
+          7.353,
+          7.363,
+          7.384,
+          7.395,
+          7.344,
+          7.345,
+          7.255
+        ]
+      },
+      {
+        "country": "Switzerland",
+        "scores": [
+          7.56,
+          7.571,
+          7.512,
+          7.24,
+          7.06,
+          6.935,
+          7.018
+        ]
+      },
+      {
+        "country": "Taiwan Province of China",
+        "scores": [
+          6.455,
+          6.584,
+          6.512,
+          6.535,
+          6.503,
+          6.669,
+          6.714
+        ]
+      },
+      {
+        "country": "Tanzania",
+        "scores": [
+          3.476,
+          3.623,
+          3.702,
+          3.694,
+          3.781,
+          3.8,
+          3.902
+        ]
+      },
+      {
+        "country": "Thailand",
+        "scores": [
+          5.999,
+          5.985,
+          5.891,
+          5.843,
+          5.976,
+          6.222,
+          6.296
+        ]
+      },
+      {
+        "country": "Togo",
+        "scores": [
+          4.187,
+          4.107,
+          4.112,
+          4.137,
+          4.214,
+          4.315,
+          4.277
+        ]
+      },
+      {
+        "country": "Tunisia",
+        "scores": [
+          4.392,
+          4.596,
+          4.516,
+          4.497,
+          4.422,
+          4.552,
+          4.798
+        ]
+      },
+      {
+        "country": "Türkiye",
+        "scores": [
+          5.132,
+          4.948,
+          4.744,
+          4.614,
+          4.975,
+          5.262,
+          5.3
+        ]
+      },
+      {
+        "country": "Uganda",
+        "scores": [
+          4.432,
+          4.636,
+          4.603,
+          4.432,
+          4.372,
+          4.461,
+          4.491
+        ]
+      },
+      {
+        "country": "Ukraine",
+        "scores": [
+          4.561,
+          4.875,
+          5.084,
+          5.071,
+          4.873,
+          4.68,
+          4.658
+        ]
+      },
+      {
+        "country": "United Arab Emirates",
+        "scores": [
+          6.791,
+          6.561,
+          6.576,
+          6.571,
+          6.733,
+          6.759,
+          6.821
+        ]
+      },
+      {
+        "country": "United Kingdom",
+        "scores": [
+          7.165,
+          7.064,
+          6.943,
+          6.796,
+          6.749,
+          6.728,
+          6.694
+        ]
+      },
+      {
+        "country": "United States",
+        "scores": [
+          6.94,
+          6.951,
+          6.977,
+          6.894,
+          6.725,
+          6.724,
+          6.816
+        ]
+      },
+      {
+        "country": "Uruguay",
+        "scores": [
+          6.44,
+          6.431,
+          6.474,
+          6.494,
+          6.611,
+          6.661,
+          6.635
+        ]
+      },
+      {
+        "country": "Uzbekistan",
+        "scores": [
+          6.258,
+          6.179,
+          6.063,
+          6.014,
+          6.195,
+          6.193,
+          6.283
+        ]
+      },
+      {
+        "country": "Venezuela",
+        "scores": [
+          5.053,
+          4.892,
+          4.925,
+          5.211,
+          5.607,
+          5.683,
+          5.756
+        ]
+      },
+      {
+        "country": "Zambia",
+        "scores": [
+          3.759,
+          4.073,
+          3.76,
+          3.982,
+          3.502,
+          3.912,
+          4.106
+        ]
+      },
+      {
+        "country": "Zimbabwe",
+        "scores": [
+          3.299,
+          3.145,
+          2.995,
+          3.204,
+          3.341,
+          3.396,
+          3.346
+        ]
+      }
+    ],
+    "risers": [
+      {
+        "country": "Viet Nam",
+        "scores": [
+          5.353,
+          5.411,
+          5.485,
+          5.763,
+          6.043,
+          6.352,
+          6.428
+        ],
+        "change": 1.075
+      },
+      {
+        "country": "India",
+        "scores": [
+          3.573,
+          3.819,
+          3.777,
+          4.036,
+          4.054,
+          4.389,
+          4.536
+        ],
+        "change": 0.963
+      },
+      {
+        "country": "China",
+        "scores": [
+          5.124,
+          5.339,
+          5.585,
+          5.818,
+          5.973,
+          5.921,
+          6.074
+        ],
+        "change": 0.95
+      },
+      {
+        "country": "Serbia",
+        "scores": [
+          5.778,
+          6.078,
+          6.178,
+          6.144,
+          6.411,
+          6.606,
+          6.691
+        ],
+        "change": 0.913
+      },
+      {
+        "country": "Armenia",
+        "scores": [
+          4.677,
+          5.283,
+          5.399,
+          5.342,
+          5.455,
+          5.494,
+          5.584
+        ],
+        "change": 0.907
+      }
+    ],
+    "fallers": [
+      {
+        "country": "Afghanistan",
+        "scores": [
+          2.567,
+          2.523,
+          2.404,
+          1.859,
+          1.721,
+          1.364,
+          1.446
+        ],
+        "change": -1.121
+      },
+      {
+        "country": "Lebanon",
+        "scores": [
+          4.772,
+          4.584,
+          2.955,
+          2.392,
+          2.707,
+          3.188,
+          3.723
+        ],
+        "change": -1.049
+      },
+      {
+        "country": "Pakistan",
+        "scores": [
+          5.693,
+          4.934,
+          4.516,
+          4.555,
+          4.657,
+          4.768,
+          4.868
+        ],
+        "change": -0.825
+      },
+      {
+        "country": "Benin",
+        "scores": [
+          5.216,
+          5.045,
+          4.623,
+          4.374,
+          4.377,
+          4.357,
+          4.393
+        ],
+        "change": -0.823
+      },
+      {
+        "country": "Congo",
+        "scores": [
+          5.194,
+          5.342,
+          5.075,
+          5.267,
+          5.221,
+          5.03,
+          4.456
+        ],
+        "change": -0.738
+      }
+    ]
+  },
+  "chart3_stacked": {
+    "year": 2025,
+    "factor_order": [
+      "GDP per Capita",
+      "Social Support",
+      "Life Expectancy",
+      "Freedom",
+      "Generosity",
+      "Corruption",
+      "Unexplained"
+    ],
+    "rows": [
+      {
+        "country": "Finland",
+        "continent": "Europe",
+        "rank": 1,
+        "score": 7.764,
+        "factors": {
+          "GDP per Capita": 1.915,
+          "Social Support": 1.638,
+          "Life Expectancy": 0.939,
+          "Freedom": 1.105,
+          "Generosity": 0.093,
+          "Corruption": 0.491
+        },
+        "unexplained": 1.583
+      },
+      {
+        "country": "Costa Rica",
+        "continent": "North America",
+        "rank": 4,
+        "score": 7.439,
+        "factors": {
+          "GDP per Capita": 1.697,
+          "Social Support": 1.483,
+          "Life Expectancy": 0.739,
+          "Freedom": 1.101,
+          "Generosity": 0.059,
+          "Corruption": 0.122
+        },
+        "unexplained": 2.238
+      },
+      {
+        "country": "Israel",
+        "continent": "Asia",
+        "rank": 8,
+        "score": 7.187,
+        "factors": {
+          "GDP per Capita": 1.867,
+          "Social Support": 1.606,
+          "Life Expectancy": 0.925,
+          "Freedom": 0.863,
+          "Generosity": 0.139,
+          "Corruption": 0.196
+        },
+        "unexplained": 1.591
+      },
+      {
+        "country": "New Zealand",
+        "continent": "Oceania",
+        "rank": 11,
+        "score": 6.995,
+        "factors": {
+          "GDP per Capita": 1.876,
+          "Social Support": 1.58,
+          "Life Expectancy": 0.924,
+          "Freedom": 1.034,
+          "Generosity": 0.155,
+          "Corruption": 0.422
+        },
+        "unexplained": 1.004
+      },
+      {
+        "country": "Uruguay",
+        "continent": "South America",
+        "rank": 31,
+        "score": 6.635,
+        "factors": {
+          "GDP per Capita": 1.748,
+          "Social Support": 1.54,
+          "Life Expectancy": 0.525,
+          "Freedom": 1.054,
+          "Generosity": 0.07,
+          "Corruption": 0.194
+        },
+        "unexplained": 1.504
+      },
+      {
+        "country": "Mauritius",
+        "continent": "Africa",
+        "rank": 73,
+        "score": 5.939,
+        "factors": {
+          "GDP per Capita": 1.707,
+          "Social Support": 1.384,
+          "Life Expectancy": 0.704,
+          "Freedom": 0.926,
+          "Generosity": 0.092,
+          "Corruption": 0.127
+        },
+        "unexplained": 0.999
+      }
+    ]
+  },
+  "headline_facts": {
+    "finland_rank_1_all_years": true,
+    "finland_score_2025": 7.764,
+    "costa_rica_rank_by_year": {
+      "2019": 15,
+      "2020": 16,
+      "2021": 23,
+      "2022": 23,
+      "2023": 12,
+      "2024": 6,
+      "2025": 4
+    },
+    "costa_rica_rank_2025": 4,
+    "costa_rica_score_2025": 7.439,
+    "us_rank_2019": 18,
+    "us_rank_2025": 23,
+    "us_score_2019": 6.94,
+    "us_score_2025": 6.816,
+    "us_change_since_2019": -0.124,
+    "us_change_since_2019_display": "-0.12",
+    "nordic_in_top10_2025": {
+      "count": 5,
+      "names": [
+        "Finland",
+        "Iceland",
+        "Denmark",
+        "Sweden",
+        "Norway"
+      ]
+    },
+    "total_ranked_2025": 147,
+    "rows_2025": 145,
+    "missing_ranks_2025": [
+      88,
+      109
+    ],
+    "countries_in_trend_chart": 133,
+    "top_riser": {
+      "country": "Viet Nam",
+      "score_2019": 5.353,
+      "score_2025": 6.428,
+      "change": 1.075,
+      "change_display": "+1.08"
+    },
+    "top_faller": {
+      "country": "Afghanistan",
+      "score_2019": 2.567,
+      "score_2025": 1.446,
+      "change": -1.121,
+      "change_display": "-1.12"
+    },
+    "chart3_continent_leaders": [
+      {
+        "continent": "Europe",
+        "country": "Finland",
+        "rank": 1,
+        "score_display": "7.76",
+        "runner_up_country": "Iceland",
+        "runner_up_rank": 2,
+        "countries_in_csv_2025": 39
+      },
+      {
+        "continent": "North America",
+        "country": "Costa Rica",
+        "rank": 4,
+        "score_display": "7.44",
+        "runner_up_country": "Mexico",
+        "runner_up_rank": 12,
+        "countries_in_csv_2025": 13
+      },
+      {
+        "continent": "Asia",
+        "country": "Israel",
+        "rank": 8,
+        "score_display": "7.19",
+        "runner_up_country": "United Arab Emirates",
+        "runner_up_rank": 21,
+        "countries_in_csv_2025": 40
+      },
+      {
+        "continent": "Oceania",
+        "country": "New Zealand",
+        "rank": 11,
+        "score_display": "7.00",
+        "runner_up_country": "Australia",
+        "runner_up_rank": 15,
+        "countries_in_csv_2025": 2
+      },
+      {
+        "continent": "South America",
+        "country": "Uruguay",
+        "rank": 31,
+        "score_display": "6.64",
+        "runner_up_country": "Brazil",
+        "runner_up_rank": 32,
+        "countries_in_csv_2025": 10
+      },
+      {
+        "continent": "Africa",
+        "country": "Mauritius",
+        "rank": 73,
+        "score_display": "5.94",
+        "runner_up_country": "Libya",
+        "runner_up_rank": 81,
+        "countries_in_csv_2025": 41
+      }
+    ],
+    "chart3_zero_factors": []
+  }
+}

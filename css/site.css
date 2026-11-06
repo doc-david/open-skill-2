@@ -1,0 +1,304 @@
+/* layout concept: the figma canvas on the web. a light grey page (the figma sections) holds
+   three white panels (the 1920x1080 dashboard frames), one chart each, in reading order.
+   colors, type and spacing come from tokens.css, which is generated from the figma variables.
+   one deliberate light theme, like the open skill 1 frames, so every color is set explicitly. */
+:root {
+  color-scheme: light;
+  /* motion curves from the animate skill: strong ease-out for things appearing,
+     strong ease-in-out for things moving on screen */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --panel-radius: 22px;
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --shadow-thumb: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--color-bg-secondary); }
+
+body {
+  margin: 0;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* the band above a sticky bar on phones with a notch */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--color-bg-secondary);
+}
+
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-block: 48px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+/* masthead */
+.masthead { display: grid; gap: 12px; padding-inline: 8px; max-width: 900px; }
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 5.2vw, 56px);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.lede {
+  margin: 0;
+  max-width: 68ch;
+  font-size: clamp(17px, 1.6vw, 19px);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+/* continent filter: one row above everything it scopes, sticky so it stays in reach */
+.filter-bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-inline: -4px;
+  border-radius: 16px;
+  background: rgba(245, 245, 247, 0.82);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+}
+.filter-label { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); flex: none; }
+.chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+  padding: 2px;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chips button {
+  flex: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line-grid);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms var(--ease-out);
+}
+.chips button[aria-pressed="true"] {
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  font-weight: 600;
+}
+.chips button:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-line-axis); }
+}
+
+/* panels = the figma dashboard frames */
+.panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+.panel {
+  background: var(--color-bg-primary);
+  border-radius: var(--panel-radius);
+  padding: clamp(20px, 3.2vw, 40px);
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+/* only the title block grows; the segmented control keeps its own size */
+.panel-head > div:first-child { min-width: 0; flex: 1 1 420px; }
+h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.dek {
+  margin: 6px 0 0;
+  font-size: clamp(16px, 1.7vw, 19px);
+  color: var(--color-text-secondary);
+}
+.note { margin: 6px 0 0; font-size: 14px; color: var(--color-text-secondary); }
+
+/* chart 2's segmented control (apple's control for two views of the same content).
+   the white thumb slides between the two segments instead of jumping. */
+.segmented {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-control-track);
+  flex: none;
+}
+.segmented .thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+  box-shadow: var(--shadow-thumb);
+  transition: transform 250ms var(--ease-in-out);
+}
+.segmented[data-view="decliners"] .thumb { transform: translateX(100%); }
+.segmented button {
+  position: relative;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented button[aria-pressed="true"] { font-weight: 600; }
+
+/* chart 3's legend: one row of swatches in the stack's left-to-right order */
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 14px;
+}
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+
+/* the chart keeps figma's geometry in its viewbox and scales to the panel.
+   on a phone it keeps a readable minimum and scrolls inside its own box. */
+.chart { overflow-x: auto; overflow-y: hidden; min-width: 0; }
+.chart svg { display: block; width: 100%; min-width: 760px; height: auto; overflow: visible; }
+
+.panel-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-bg-secondary);
+  padding-top: 14px;
+}
+.empty {
+  margin: -8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.colophon {
+  display: grid;
+  gap: 10px;
+  max-width: 76ch;
+  padding: 8px 8px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.colophon p { margin: 0; }
+.colophon strong { color: var(--color-text-primary); font-weight: 600; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+.error {
+  margin: 0;
+  padding: 24px;
+  border-radius: var(--panel-radius);
+  background: var(--color-bg-primary);
+  font-weight: 600;
+}
+
+/* svg text uses the figma text styles at figma's own size; the viewbox scales them with the chart */
+.chart text { font-family: var(--font-family); }
+.t-footnote { font-size: var(--font-size-footnote); }
+.t-caption { font-size: var(--font-size-caption-1); }
+.strong { font-weight: 600; }
+.ink { fill: var(--color-text-primary); }
+.muted { fill: var(--color-text-secondary); }
+/* a white halo lets a label sit on top of gridlines, like the label backings in figma */
+.halo { paint-order: stroke; stroke: var(--color-bg-primary); stroke-width: 8px; stroke-linejoin: round; }
+
+.gridline { stroke: var(--color-line-grid); stroke-width: 1px; shape-rendering: crispEdges; }
+.axisline { stroke: var(--color-line-axis); stroke-width: 1px; shape-rendering: crispEdges; }
+
+/* hover: the hovered mark stays, everything else steps back (the figma hover tint vanished on navy bars) */
+.chart .bar, .chart .value, .chart .segment { transition: opacity 120ms ease; }
+.hovering .bar:not(.active), .hovering .value:not(.active) { opacity: 0.35; }
+.hovering .segment:not(.active) { opacity: 0.3; }
+.row:focus { outline: none; }
+.row:focus-visible .bar, .row:focus-visible .segment { stroke: var(--color-text-primary); stroke-width: 3px; }
+.label:focus { outline: none; }
+.label:focus-visible text { text-decoration: underline; text-decoration-thickness: 2px; }
+
+/* the one shared tooltip (apple style: dark, 12px radius, values first) */
+.tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  max-width: 300px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-text-primary);
+  box-shadow: var(--shadow-tooltip);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-title { font-size: 15px; font-weight: 600; color: var(--color-bg-primary); }
+.tooltip-lines { margin-top: 2px; font-size: 13px; line-height: 1.45; color: #c7c7cc; font-variant-numeric: tabular-nums; }
+.tooltip-lines div:first-child { color: var(--color-bg-primary); font-weight: 600; font-size: 14px; }
+
+:focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented .thumb, .chips button, .tooltip { transition-duration: 0ms; }
+}
+
+@media (max-width: 640px) {
+  .page { padding-block: 28px 48px; gap: 18px; }
+  .filter-bar { flex-wrap: wrap; }
+}
