@@ -10,17 +10,18 @@ function chart1(data, continents) {
   const ticks = [0, 2, 4, 6, 8, 10];
 
   // rows: the top 10 start at y 238 and the bottom 10 at y 616, 33px apart, with a gap between
+  const changeText = d => d.change_since_2019 === null ? "n/a" : formatChange(d.change_since_2019);
   const rows = [
     ...bars.top10.map((d, i) => ({ ...d, top: 238 + 33 * i })),
     ...bars.bottom10.map((d, i) => ({ ...d, top: 616 + 33 * i }))
   ].map(d => ({ ...d, continent: continents[d.country] }));
 
-  svg.append("g").selectAll("line").data(ticks).join("line")
+  svg.append("g").attr("aria-hidden", "true").selectAll("line").data(ticks).join("line")
     .attr("class", d => d === 0 ? "axisline" : "gridline")
     .attr("x1", d => x(d)).attr("x2", d => x(d))
     .attr("y1", 238).attr("y2", 946);
 
-  svg.append("g").selectAll("text").data(ticks).join("text")
+  svg.append("g").attr("aria-hidden", "true").selectAll("text").data(ticks).join("text")
     .attr("class", "t-footnote muted")
     .attr("x", d => x(d)).attr("y", 215)
     .attr("text-anchor", "middle").attr("dominant-baseline", "central")
@@ -42,7 +43,8 @@ function chart1(data, continents) {
     .attr("class", "row")
     .attr("opacity", 1)
     .attr("tabindex", 0)
-    .attr("aria-label", d => `${d.country}: rank ${d.rank} of ${bars.total_ranked}, score ${formatScore(d.score)}, change since 2019 ${formatChange(d.change_since_2019)}`);
+    .attr("role", "img")
+    .attr("aria-label", d => `${d.country}: rank ${d.rank} of ${bars.total_ranked}, score ${formatScore(d.score)}, region ${d.region}, change since 2019 ${changeText(d)}`);
 
   row.append("text").attr("class", "t-footnote muted")
     .attr("x", 136).attr("y", d => d.top + 15)
@@ -67,7 +69,7 @@ function chart1(data, continents) {
   const tip = d => [
     `Rank ${d.rank} of ${bars.total_ranked} · score ${formatScore(d.score)}`,
     `Region: ${d.region}`,
-    `Change since 2019: ${d.change_since_2019 === null ? "n/a" : formatChange(d.change_since_2019)}`
+    `Change since 2019: ${changeText(d)}`
   ];
 
   // the hovered bar stays solid and the rest step back. in figma the hover tint was invisible on navy
@@ -80,12 +82,23 @@ function chart1(data, continents) {
   row.select(".bar")
     .on("pointerenter", (event, d) => { activate(d); showTooltip(event, d.country, tip(d)); })
     .on("pointermove", moveTooltip)
-    .on("pointerleave", () => { activate(null); hideTooltip(); });
+    .on("pointerleave", () => { activate(null); hideTooltip(); returnToFocus(svg.node()); });
 
   row.on("focus", function (event, d) {
+    if (focusedByMouse(this)) return;
     activate(d);
     showTooltipAt(this.querySelector(".bar"), d.country, tip(d));
-  }).on("blur", () => { activate(null); hideTooltip(); });
+  }).on("blur", () => {
+    if (focusTooltipOpen()) { activate(null); hideTooltip(); }
+  });
+
+  const tableRows = dataTable("#chart1", [
+    { label: "Rank", value: d => d.rank, numeric: true },
+    { label: "Country", value: d => d.country, header: true },
+    { label: "Region", value: d => d.region },
+    { label: "Score", value: d => formatScore(d.score), numeric: true },
+    { label: "Change since 2019", value: changeText, numeric: true }
+  ], rows);
 
   return {
     filter(continent) {
@@ -93,7 +106,9 @@ function chart1(data, continents) {
       row.transition().duration(motion.duration).ease(motion.ease)
         .attr("opacity", d => included(d) ? 1 : faded);
       row.attr("tabindex", d => included(d) ? 0 : -1);
+      tableRows.attr("hidden", d => included(d) ? null : "");
       return rows.filter(included).length;
-    }
+    },
+    clear() { activate(null); }
   };
 }

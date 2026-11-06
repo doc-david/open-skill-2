@@ -27,19 +27,19 @@ function chart2(data, continents) {
   const included = s => state.continent === "All" || s.continent === state.continent;
 
   // gridlines at 0, 2, 4, 6, 8, 10; the 0 line is darker, like the bar charts' zero line
-  svg.append("g").selectAll("line").data(lines.y_axis.ticks).join("line")
+  svg.append("g").attr("aria-hidden", "true").selectAll("line").data(lines.y_axis.ticks).join("line")
     .attr("class", d => d === 0 ? "axisline" : "gridline")
     .attr("x1", 176).attr("x2", 1448)
     .attr("y1", d => y(d)).attr("y2", d => y(d));
 
   // tick labels sit right-aligned in a box from x 80 to 160, centered on each gridline
-  svg.append("g").selectAll("text").data(lines.y_axis.ticks).join("text")
+  svg.append("g").attr("aria-hidden", "true").selectAll("text").data(lines.y_axis.ticks).join("text")
     .attr("class", "t-footnote muted")
     .attr("x", 160).attr("y", d => y(d))
     .attr("text-anchor", "end").attr("dominant-baseline", "central")
     .text(d => d);
 
-  svg.append("g").selectAll("text").data(lines.years).join("text")
+  svg.append("g").attr("aria-hidden", "true").selectAll("text").data(lines.years).join("text")
     .attr("class", "t-footnote muted")
     .attr("x", d => x(d)).attr("y", 943)
     .attr("text-anchor", "middle").attr("dominant-baseline", "central")
@@ -101,6 +101,7 @@ function chart2(data, continents) {
       .attr("stroke", colors.muted).attr("stroke-width", 1);
     const label = group.selectAll("g").data(items).join("g")
       .attr("class", "label")
+      .attr("role", "img")
       .attr("aria-label", d => `${d.s.country}: 2019 ${formatScore(d.s.scores[0])}, 2025 ${formatScore(d.s.scores[6])}, change ${formatChange(d.s.change)}`);
     const text = label.append("text").attr("class", "t-footnote")
       .attr("x", 1472).attr("y", d => d.y).attr("dominant-baseline", "central");
@@ -108,9 +109,12 @@ function chart2(data, continents) {
     text.append("tspan").attr("class", "muted").attr("dx", 12).text(d => formatChange(d.s.change));
     // keyboard: tab to a label to light up its line, with the same tooltip as hovering
     label.on("focus", function (event, d) {
+      if (focusedByMouse(this)) return;
       paintHover(d.s);
       showTooltipAt(this, d.s.country, tip(d.s, 2025));
-    }).on("blur", leave);
+    }).on("blur", () => {
+      if (focusTooltipOpen()) leave();
+    });
     labelSets[view] = group;
   }
 
@@ -119,7 +123,15 @@ function chart2(data, continents) {
     .attr("x", 176).attr("y", 290).attr("width", 1272).attr("height", 620)
     .attr("fill", "transparent")
     .on("pointermove", hover)
-    .on("pointerleave", leave);
+    .on("pointerleave", () => { leave(); returnToFocus(svg.node()); });
+
+  // the table lists every country on the chart, biggest rise first, so all 133 lines have a
+  // way in that doesn't need a pointer. the five the toggle highlights are marked in paint()
+  const tableRows = dataTable("#chart2", [
+    { label: "Country", value: s => s.country, header: true },
+    ...lines.years.map((year, i) => ({ label: year, value: s => formatScore(s.scores[i]), numeric: true })),
+    { label: "Change", value: s => formatChange(s.change), numeric: true }
+  ], [...series].sort((a, b) => d3.descending(a.change, b.change)));
 
   function tip(s, year) {
     return [
@@ -199,6 +211,7 @@ function chart2(data, continents) {
 
     paths.filter(highlighted).raise();
     if (state.hover) paths.filter(s => s === state.hover).raise();
+    tableRows.classed("highlighted", highlighted);
 
     (animate ? dots.transition(t) : dots)
       .attr("r", d => highlighted(d.s) ? 5 : 3)
@@ -207,14 +220,21 @@ function chart2(data, continents) {
     // the outgoing labels slide up and fade, the incoming ones slide in from below
     for (const [view, group] of Object.entries(labelSets)) {
       const on = view === state.view;
-      (animate ? group.transition(t) : group)
+      // the outgoing set is hidden from screen readers now, and from everything once it has faded.
+      // an interrupted fade never reaches "end", but then the next paint decides again
+      group.attr("aria-hidden", on ? null : "true");
+      if (on) group.attr("visibility", null);
+      const fade = (animate ? group.transition(t) : group)
         .attr("opacity", on ? 1 : 0)
         .attr("transform", on ? "translate(0,0)" : `translate(0,${view === "risers" ? -10 : 10})`);
+      if (!on && animate) fade.on("end", () => { if (state.view !== view) group.attr("visibility", "hidden"); });
+      if (!on && !animate) group.attr("visibility", "hidden");
       group.attr("pointer-events", on ? null : "none");
       // labels and their leader lines fade on the same clock as the lines they name
       const named = group.selectAll(".label, line");
       (animate ? named.transition(t) : named).attr("opacity", d => included(d.s) ? 1 : faded * 2);
-      group.selectAll(".label").attr("tabindex", on ? 0 : -1);
+      // only labels you can read are tab stops, the same rule as the rows on charts 1 and 3
+      group.selectAll(".label").attr("tabindex", d => on && included(d.s) ? 0 : -1);
     }
   }
 
@@ -232,7 +252,9 @@ function chart2(data, continents) {
     filter(continent) {
       state.continent = continent;
       paint(true);
+      tableRows.attr("hidden", s => included(s) ? null : "");
       return series.filter(included).length;
-    }
+    },
+    clear: leave
   };
 }

@@ -111,7 +111,9 @@ h1 {
   overflow-x: auto;
   scrollbar-width: none;
   min-width: 0;
-  padding: 2px;
+  padding: 5px;
+  margin-block: -3px;
+  scroll-padding-inline: 16px;
 }
 .chips::-webkit-scrollbar { display: none; }
 .chips button {
@@ -127,6 +129,7 @@ h1 {
   color: var(--color-text-primary);
   cursor: pointer;
   transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms var(--ease-out);
+  scroll-margin-inline: 8px;
 }
 .chips button[aria-pressed="true"] {
   background: var(--color-text-primary);
@@ -238,6 +241,67 @@ h2 {
    on a phone it keeps a readable minimum and scrolls inside its own box. */
 .chart { overflow-x: auto; overflow-y: hidden; min-width: 0; }
 .chart svg { display: block; width: 100%; min-width: 760px; height: auto; overflow: visible; }
+
+/* the data table: closed by default, so the chart stays the first thing you read */
+.data-table { font-size: 14px; }
+.data-table summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline: -12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 160ms ease;
+}
+.data-table summary::-webkit-details-marker { display: none; }
+.data-table summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateX(-1px) rotate(-45deg);
+  transition: transform 160ms var(--ease-out);
+}
+.data-table[open] summary::before { transform: translateY(-1px) rotate(45deg); }
+@media (hover: hover) and (pointer: fine) {
+  .data-table summary:hover { background: var(--color-fill-hover); }
+}
+.table-scroll {
+  margin-top: 8px;
+  max-height: 440px;
+  overflow: auto;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--color-bg-secondary);
+}
+.data-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.data-table th, .data-table td {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-bg-secondary);
+}
+.data-table .num { text-align: right; }
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg-primary);
+  box-shadow: inset 0 -1px 0 var(--color-line-grid);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: normal;
+  vertical-align: bottom;
+}
+.data-table tbody th { font-weight: 500; }
+.data-table tbody tr:last-child > * { border-bottom: 0; }
+.data-table tr.highlighted > * { color: var(--color-data-focus); font-weight: 600; }
 
 .panel-foot {
   display: flex;
@@ -367,9 +431,19 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .tooltip-lines div:first-child { color: var(--color-bg-primary); font-weight: 600; font-size: 14px; }
 
 :focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
+.row, .label, .segmented button, .data-table summary, .table-scroll { scroll-margin-top: 72px; }
+.table-scroll:focus-visible { outline-offset: -2px; }
+
+/* windows high contrast mode: keep the legend's colors and show which control is selected */
+@media (forced-colors: active) {
+  .legend .swatch { forced-color-adjust: none; }
+  .chips button[aria-pressed="true"] { background: Highlight; border-color: Highlight; color: HighlightText; forced-color-adjust: none; }
+  .segmented .thumb { outline: 2px solid CanvasText; }
+  .filter-bar.is-stuck { outline: 1px solid CanvasText; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .segmented .thumb, .segmented button, .chips button, .tooltip, .chart .bar, .chart .value, .chart .segment, .empty, .filter-bar { transition-duration: 0ms; }
+  .segmented .thumb, .segmented button, .chips button, .tooltip, .chart .bar, .chart .value, .chart .segment, .empty, .filter-bar, .data-table summary, .data-table summary::before { transition-duration: 0ms; }
   .chips button:active, .segmented button:active { transform: none; }
 }
 
@@ -377,4 +451,5 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   .page { padding-block: 28px 48px; gap: 18px; }
   .filter-bar { flex-wrap: wrap; }
   .pair-grid { grid-template-columns: minmax(0, 1fr); }
+  .row, .label, .segmented button, .data-table summary, .table-scroll { scroll-margin-top: 110px; }
 }

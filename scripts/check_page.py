@@ -115,6 +115,31 @@ def main():
         sizes = page.eval_on_selector_all(".pair", "pairs => pairs.map(p => [...p.querySelectorAll('.shot')].map(s => { const b = s.getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; }))")
         check("each figma and d3 pair is the same size", len(sizes) == 3 and all(a == b for a, b in sizes), sizes)
 
+        # data tables: every cell equals this script's own rounding of chart-data.json
+        def table(chart):
+            return page.eval_on_selector_all(f"{chart} .data-table tbody tr", "rows => rows.map(r => [...r.children].map(c => c.textContent))")
+
+        expected = [[str(r["rank"]), r["country"], r["region"], score2(r["score"]), "n/a" if r["change_since_2019"] is None else change2(r["change_since_2019"])] for r in c1]
+        got = table("#chart1")
+        check("chart 1 table matches chart-data.json", got == expected, [(a, b) for a, b in zip(got, expected) if a != b])
+
+        all_lines = lines["context_series"] + lines["risers"] + lines["fallers"]
+        difference = lambda s: Decimal(str(s["scores"][6])) - Decimal(str(s["scores"][0]))
+        expected = {s["country"]: [s["country"]] + [score2(v) for v in s["scores"]] + [change2(difference(s))] for s in all_lines}
+        got = table("#chart2")
+        bad = [g for g in got if expected.get(g[0]) != g]
+        check("chart 2 table lists all 133 countries, matching chart-data.json", len(got) == 133 and not bad, (len(got), bad[:3]))
+
+        order = data["chart3_stacked"]["factor_order"]
+        expected = [[str(r["rank"]), r["country"], continents[r["country"]], score2(r["score"])] + [score2(r["unexplained"] if f == "Unexplained" else r["factors"][f]) for f in order] for r in rows]
+        got = table("#chart3")
+        check("chart 3 table matches chart-data.json", got == expected, [(a, b) for a, b in zip(got, expected) if a != b])
+
+        heads = page.eval_on_selector_all(".data-table", "ts => ts.map(t => [t.querySelectorAll('thead th[scope=col]').length, t.querySelectorAll('tbody th[scope=row]').length, !!t.querySelector('table').getAttribute('aria-labelledby')])")
+        check("tables have column and row headers and a name", heads == [[5, 20, True], [9, 133, True], [11, 6, True]], heads)
+        closed = page.eval_on_selector_all(".data-table", "ts => ts.map(t => t.open)")
+        check("tables start closed", closed == [False, False, False], closed)
+
         if args.shots:
             Path(args.shots).mkdir(parents=True, exist_ok=True)
             page.screenshot(path=f"{args.shots}/full.png", full_page=True)
@@ -167,8 +192,14 @@ def main():
         check("filter keeps only Mauritius solid on chart 3", [c for c, o in rows3 if o == 1] == ["Mauritius"], rows3)
         if args.shots:
             page.screenshot(path=f"{args.shots}/africa.png", full_page=True)
+        visible = lambda chart: page.eval_on_selector_all(f"{chart} .data-table tbody tr", "rows => rows.filter(r => !r.hidden).map(r => r.__data__.country)")
+        african = lambda names: all(continents[n] == "Africa" for n in names)
+        one, two, three = visible("#chart1"), visible("#chart2"), visible("#chart3")
+        check("the filter also filters the tables", three == ["Mauritius"] and african(one) and african(two) and len(two) == sum(continents[s["country"]] == "Africa" for s in all_lines), (len(one), len(two), three))
         page.click("#continent-oceania")
         page.wait_for_timeout(450)
+        stops = page.eval_on_selector_all("#chart2 .label", "l => l.filter(x => x.getAttribute('tabindex') === '0').map(x => x.__data__.s.country)")
+        check("faded chart 2 labels aren't tab stops", stops == [], stops)
         shown = page.eval_on_selector("#chart1 .empty", "e => ({ on: e.classList.contains('on'), text: e.textContent, opacity: +getComputedStyle(e).opacity, role: e.getAttribute('role'), pointer: getComputedStyle(e).pointerEvents })")
         check("chart 1 says when a continent has no countries", shown["on"] and "Oceania" in shown["text"] and shown["opacity"] == 1 and shown["role"] == "status", shown)
         check("the empty message never blocks the chart", shown["pointer"] == "none", shown)
@@ -209,6 +240,13 @@ def main():
         check("a hover repaints only the lines that changed", 0 < writes <= 8 * 2 * 3, writes)
         page.mouse.move(5, 5)
 
+        # screen readers only get the highlighted set of labels, and rows and labels have a role
+        page.evaluate("window.scrollTo(0, 0)")
+        hidden = page.eval_on_selector_all("#chart2 svg > g", "gs => gs.filter(g => g.querySelector('.label')).map(g => [g.getAttribute('aria-hidden'), g.getAttribute('visibility'), g.querySelector('.label').__data__.s.country])")
+        check("the hidden set of chart 2 labels is hidden from everyone", sorted(h[:2] for h in hidden if h[0]) == [["true", "hidden"]] and sum(1 for h in hidden if not h[0]) == 1, hidden)
+        roles = page.eval_on_selector_all("#chart1 .row, #chart2 .label, #chart3 .row", "e => e.filter(x => x.getAttribute('role') !== 'img' || !x.getAttribute('aria-label')).length")
+        check("rows and labels have a role and a name", roles == 0, roles)
+
         # the filter bar has an edge once it sticks, and none before
         page.evaluate("window.scrollTo(0, 0)")
         page.wait_for_timeout(100)
@@ -226,6 +264,100 @@ def main():
         check("no sideways page scroll at 390px", wide <= 390, wide)
         if args.shots:
             page.screenshot(path=f"{args.shots}/phone.png", full_page=False)
+
+        # keyboard paths, on a fresh page and a short window: tab through everything, forward and back
+        keys = browser.new_page(viewport={"width": 1440, "height": 700})
+        keys.goto(url, wait_until="networkidle")
+        keys.wait_for_selector("#chart3 .segment")
+        describe = """() => {
+            const e = document.activeElement;
+            const b = e.getBoundingClientRect();
+            const bar = document.querySelector('.filter-bar').getBoundingClientRect();
+            const tip = document.querySelector('.tooltip');
+            return {
+                name: e.id || (e.tagName === 'SUMMARY' ? 'summary' : e.classList.contains('row') ? 'row' : e.classList.contains('label') ? 'label' : e.tagName),
+                under: !e.closest('.filter-bar') && b.top < bar.bottom - 1 && bar.top <= 8.5,
+                tip: tip.classList.contains('visible'),
+            };
+        }"""
+        forward = []
+        for _ in range(60):
+            keys.keyboard.press("Tab")
+            keys.wait_for_timeout(10)
+            step = keys.evaluate(describe)
+            if step["name"] == "BODY":
+                break
+            forward.append(step)
+        names = [s["name"] for s in forward]
+        chips = [f"continent-{c}" for c in ["all", "africa", "asia", "europe", "north-america", "oceania", "south-america"]]
+        want = chips + ["row"] * 20 + ["summary", "view-risers", "view-decliners"] + ["label"] * 5 + ["summary"] + ["row"] * 6 + ["summary"]
+        check("tab reaches every control in reading order", names == want, names)
+        check("focused rows and labels show a tooltip", all(s["tip"] for s in forward if s["name"] in ("row", "label")), [s["name"] for s in forward if s["name"] in ("row", "label") and not s["tip"]])
+        check("forward focus never lands under the sticky bar", not any(s["under"] for s in forward), [s["name"] for s in forward if s["under"]])
+        backward = []
+        for _ in range(60):
+            keys.keyboard.press("Shift+Tab")
+            keys.wait_for_timeout(10)
+            step = keys.evaluate(describe)
+            if step["name"] == "BODY":
+                break
+            backward.append(step)
+        check("backward focus never lands under the sticky bar", len(backward) >= len(want) - 1 and not any(s["under"] for s in backward), [s["name"] for s in backward if s["under"]])
+        tip_rows = [s for s in backward if s["name"] in ("row", "label")]
+        check("tooltips survive the scroll focus causes", all(s["tip"] for s in tip_rows), sum(not s["tip"] for s in tip_rows))
+
+        # esc dismisses a focus tooltip and keeps focus
+        keys.evaluate("window.scrollTo(0, 0)")
+        for _ in range(8):
+            keys.keyboard.press("Tab")
+        keys.wait_for_timeout(100)
+        shown = keys.evaluate(describe)
+        keys.keyboard.press("Escape")
+        keys.wait_for_timeout(250)
+        after = keys.evaluate(describe)
+        check("esc dismisses a tooltip and keeps focus", shown["tip"] and not after["tip"] and after["name"] == "row", (shown, after))
+
+        # the tooltip stays with a focused row on scroll, and steps away when the row is off screen
+        keys.keyboard.press("Tab")
+        keys.wait_for_timeout(200)
+        beside = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return Math.abs(t.top - r.top) < 80; }")
+        keys.evaluate("window.scrollBy(0, 60)")
+        keys.wait_for_timeout(200)
+        still = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return Math.abs(t.top - r.top) < 80; }")
+        keys.evaluate("window.scrollBy(0, 1600)")
+        keys.wait_for_timeout(250)
+        gone = keys.evaluate(describe)
+        check("a focus tooltip stays with its row on scroll", beside and still and not gone["tip"], (beside, still, gone))
+
+        # a mouse click on a country's name doesn't leave a tooltip or dimming behind
+        keys.evaluate("document.activeElement.blur(); window.scrollTo(0, 0)")
+        keys.wait_for_timeout(100)
+        keys.locator("#chart1 .row", has_text="Iceland").locator("text").nth(1).click()
+        keys.mouse.move(5, 5)
+        keys.wait_for_timeout(300)
+        pinned = keys.evaluate("[document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('#chart1 svg').classList.contains('hovering')]")
+        check("clicking a name doesn't pin a tooltip", pinned == [False, False], pinned)
+
+        # data tables open from the keyboard, and the tall one scrolls inside its own box
+        keys.evaluate("document.activeElement.blur(); window.scrollTo(0, 0)")
+        keys.locator("#chart2 .data-table summary").focus()
+        keys.keyboard.press("Enter")
+        keys.wait_for_timeout(100)
+        opened = keys.evaluate("(() => { const d = document.querySelector('#chart2 .data-table'), s = d.querySelector('.table-scroll'); return [d.open, s.scrollHeight > s.clientHeight, s.tabIndex]; })()")
+        check("a data table opens with the keyboard and scrolls in its box", opened == [True, True, 0], opened)
+        keys.keyboard.press("Enter")
+        keys.close()
+
+        # a tooltip opened on a phone-width window stays fully inside the window
+        small = browser.new_page(viewport={"width": 390, "height": 844})
+        small.goto(url, wait_until="networkidle")
+        small.wait_for_selector("#chart3 .segment")
+        for _ in range(11):
+            small.keyboard.press("Tab")
+        small.wait_for_timeout(250)
+        edge = small.evaluate("(() => { const t = document.querySelector('.tooltip').getBoundingClientRect(); return [t.left, t.right, innerWidth]; })()")
+        check("tooltips stay inside a narrow window", edge[0] >= 0 and edge[1] <= edge[2], edge)
+        small.close()
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace
         calm = browser.new_context(reduced_motion="reduce").new_page()

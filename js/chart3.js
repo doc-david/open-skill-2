@@ -38,12 +38,12 @@ function chart3(data, continents) {
     return { ...d, top, segments, continent: continents[d.country] };
   });
 
-  svg.append("g").selectAll("line").data(ticks).join("line")
+  svg.append("g").attr("aria-hidden", "true").selectAll("line").data(ticks).join("line")
     .attr("class", d => d === 0 ? "axisline" : "gridline")
     .attr("x1", d => x(d)).attr("x2", d => x(d))
     .attr("y1", 296).attr("y2", 884);
 
-  svg.append("g").selectAll("text").data(ticks).join("text")
+  svg.append("g").attr("aria-hidden", "true").selectAll("text").data(ticks).join("text")
     .attr("class", "t-footnote muted")
     .attr("x", d => x(d)).attr("y", 915)
     .attr("text-anchor", "middle").attr("dominant-baseline", "central")
@@ -58,6 +58,7 @@ function chart3(data, continents) {
     .attr("class", "row")
     .attr("opacity", 1)
     .attr("tabindex", 0)
+    .attr("role", "img")
     .attr("aria-label", d => `${d.country}, ${d.continent}, rank ${d.rank}, score ${formatScore(d.score)}: ` +
       d.segments.map(s => `${factors[s.name].label} ${formatScore(s.value)}`).join(", "));
 
@@ -99,13 +100,24 @@ function chart3(data, continents) {
       showTooltip(event, factors[s.name].title, [`${formatScore(s.value)} of ${formatScore(s.score)} points · ${s.country}`]);
     })
     .on("pointermove", moveTooltip)
-    .on("pointerleave", () => { activate(null); hideTooltip(); });
+    .on("pointerleave", () => { activate(null); hideTooltip(); returnToFocus(svg.node()); });
 
   // keyboard: a focused row shows its whole breakdown at once
   row.on("focus", function (event, d) {
+    if (focusedByMouse(this)) return;
     showTooltipAt(this.querySelector(".segment:last-of-type"), `${d.country} · ${formatScore(d.score)}`,
       d.segments.map(s => `${factors[s.name].label}: ${formatScore(s.value)}`));
-  }).on("blur", hideTooltip);
+  }).on("blur", () => {
+    if (focusTooltipOpen()) hideTooltip();
+  });
+
+  const tableRows = dataTable("#chart3", [
+    { label: "Rank", value: d => d.rank, numeric: true },
+    { label: "Country", value: d => d.country, header: true },
+    { label: "Continent", value: d => d.continent },
+    { label: "Score", value: d => formatScore(d.score), numeric: true },
+    ...stack.factor_order.map((name, j) => ({ label: factors[name].label, value: d => formatScore(d.segments[j].value), numeric: true }))
+  ], rows);
 
   return {
     filter(continent) {
@@ -113,7 +125,9 @@ function chart3(data, continents) {
       row.transition().duration(motion.duration).ease(motion.ease)
         .attr("opacity", d => included(d) ? 1 : faded);
       row.attr("tabindex", d => included(d) ? 0 : -1);
+      tableRows.attr("hidden", d => included(d) ? null : "");
       return rows.filter(included).length;
-    }
+    },
+    clear() { activate(null); }
   };
 }

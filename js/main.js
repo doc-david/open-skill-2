@@ -62,6 +62,13 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
     charts.chart2.view(view);
   });
 
+  // esc always dismisses a tooltip and its emphasis. focus stays where it is
+  document.addEventListener("keydown", event => {
+    if (event.key !== "Escape") return;
+    hideTooltip();
+    Object.values(charts).forEach(chart => chart.clear());
+  });
+
   // the filter bar sits flat on the page, and turns into a floating layer once it sticks
   const bar = document.querySelector(".filter-bar");
   const stuckAt = parseFloat(getComputedStyle(bar).top);
