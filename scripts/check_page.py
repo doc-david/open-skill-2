@@ -103,6 +103,18 @@ def main():
         text = page.inner_text("main")
         check("no template or NaN text", not any(t in text for t in ["{", "}", "NaN", "undefined", "null"]))
 
+        # figma vs d3: every still loads, has alt text, and each pair shows the same chart region
+        page.eval_on_selector_all(".compare img", "imgs => imgs.forEach(i => { i.loading = 'eager'; })")
+        page.wait_for_function("[...document.querySelectorAll('.compare img')].every(i => i.complete)")
+        stills = page.eval_on_selector_all(".compare img", "imgs => imgs.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth, alt: i.alt }))")
+        figma = [s for s in stills if "/figma/" in s["src"]]
+        d3s = [s for s in stills if "/d3/" in s["src"]]
+        check("figma frames load at 1920px", len(figma) == 3 and all(s["w"] == 1920 for s in figma), figma)
+        check("d3 stills load at figma's scale", len(d3s) == 3 and all(s["w"] == 1760 for s in d3s), d3s)
+        check("every comparison image has alt text", all(s["alt"] for s in stills), stills)
+        sizes = page.eval_on_selector_all(".pair", "pairs => pairs.map(p => [...p.querySelectorAll('.shot')].map(s => { const b = s.getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; }))")
+        check("each figma and d3 pair is the same size", len(sizes) == 3 and all(a == b for a, b in sizes), sizes)
+
         if args.shots:
             Path(args.shots).mkdir(parents=True, exist_ok=True)
             page.screenshot(path=f"{args.shots}/full.png", full_page=True)

@@ -231,6 +231,32 @@ h2 {
   color: var(--color-text-secondary);
 }
 
+/* figma vs d3: each pair is cropped to the same chart region, so the two line up point for point */
+.compare { gap: 40px; }
+.pair { display: grid; gap: 14px; min-width: 0; }
+.pair h3 { margin: 0; font-size: 19px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+.pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.pair figure { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.pair figcaption { font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; }
+.pair figcaption strong { color: var(--color-text-primary); font-weight: 600; }
+.shot {
+  position: relative;
+  aspect-ratio: 1760 / var(--h);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-bg-primary);
+  box-shadow: 0 0 0 1px var(--color-line-grid);
+}
+.shot img { display: block; width: 100%; height: auto; }
+/* the figma image is the whole 1920x1080 slide; this crops it to the chart's viewbox */
+.shot-figma img {
+  position: absolute;
+  max-width: none;
+  width: calc(1920 / 1760 * 100%);
+  left: calc(-80 / 1760 * 100%);
+  top: calc(var(--y) / var(--h) * -100%);
+}
+
 .colophon {
   display: grid;
   gap: 10px;
@@ -302,4 +328,5 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 @media (max-width: 640px) {
   .page { padding-block: 28px 48px; gap: 18px; }
   .filter-bar { flex-wrap: wrap; }
+  .pair-grid { grid-template-columns: minmax(0, 1fr); }
 }

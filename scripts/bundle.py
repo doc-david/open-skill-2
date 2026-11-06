@@ -5,6 +5,7 @@ inline, d3 from cdnjs. the git site itself serves the separate files, so edit th
 
 run: python scripts/bundle.py   (writes dist/world-happiness.html)
 """
+import base64
 import re
 from pathlib import Path
 
@@ -29,6 +30,14 @@ html = html.replace('<script src="js/format.js"></script>', blocks + '<script sr
 # our own scripts inline
 html = re.sub(r'<script src="(js/[^"]+)"></script>',
               lambda m: "<script>\n" + (root / m.group(1)).read_text(encoding="utf-8") + "</script>", html)
+
+# the figma and d3 stills inline, since the artifact has no assets folder
+def inline_image(match):
+    data = base64.b64encode((root / match.group(1)).read_bytes()).decode()
+    return f'src="data:image/png;base64,{data}"'
+
+
+html = re.sub(r'src="(assets/[^"]+\.png)"', inline_image, html)
 
 # the artifact wraps the page in its own doctype, html, head, body, charset and viewport
 for pattern in [r"<!doctype html>\s*", r"<html[^>]*>\s*", r"</html>\s*", r"<head>\s*", r"</head>\s*",

@@ -76,6 +76,57 @@
         <p class="empty" hidden></p>
         <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span><span>3 / 3</span></footer>
       </section>
+
+      <section class="panel compare" id="compare" aria-labelledby="compare-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="compare-title">What Figma Couldn’t Do</h2>
+            <p class="dek">Each Open Skill 1 frame beside its D3 chart, drawn from the same data at the same coordinates.</p>
+          </div>
+        </header>
+
+        <article class="pair" aria-labelledby="pair1-title">
+          <h3 id="pair1-title">Happiest and Unhappiest Countries of 2025</h3>
+          <div class="pair-grid">
+            <figure>
+              <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart1-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 1: navy bars for the top and bottom ten countries, with no pointer feedback."></div>
+              <figcaption><strong>Figma.</strong> A tooltip was a fixed box baked into a hover variant, so it couldn’t follow the cursor. The hover tint also vanished on the navy bars.</figcaption>
+            </figure>
+            <figure>
+              <div class="shot" style="--h: 760"><img src="assets/d3/chart1-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 1 with Denmark’s bar hovered: its bar stays solid, the others step back, and a tooltip sits at the cursor."></div>
+              <figcaption><strong>D3.</strong> One tooltip follows the cursor and flips at the window’s edge. The hovered bar stays solid while the others step back.</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <article class="pair" aria-labelledby="pair2-title">
+          <h3 id="pair2-title">Score Change from 2019 to 2025</h3>
+          <div class="pair-grid">
+            <figure>
+              <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart2-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 2: five navy lines labeled at their ends over a crowd of grey lines, with the toggle above."></div>
+              <figcaption><strong>Figma.</strong> The toggle was two variants swapped, and tooltips collided at the ends of the lines.</figcaption>
+            </figure>
+            <figure>
+              <div class="shot" style="--h: 760"><img src="assets/d3/chart2-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 2 with Afghanistan's grey line hovered: the line darkens, a crosshair and marker sit on it, and a tooltip names it."></div>
+              <figcaption><strong>D3.</strong> The toggle animates the lines themselves. Point near any country’s line and it lights up and names itself.</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <article class="pair" aria-labelledby="pair3-title">
+          <h3 id="pair3-title">Factors of Happiness in 2025</h3>
+          <div class="pair-grid">
+            <figure>
+              <div class="shot shot-figma" style="--y: 280; --h: 680"><img src="assets/figma/chart3-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 3: stacked factor bars for the top-ranked country of each continent."></div>
+              <figcaption><strong>Figma.</strong> Each frame stood alone, with its data pasted in by a script, so nothing could link the three charts.</figcaption>
+            </figure>
+            <figure>
+              <div class="shot" style="--h: 680"><img src="assets/d3/chart3-d3.png" width="1760" height="680" loading="lazy" alt="The D3 chart 3 with Europe selected in the continent filter: Finland's row stays solid and the others fade."></div>
+              <figcaption><strong>D3.</strong> All three charts draw from one data file, so one continent filter changes them together. Here, Europe is selected.</figcaption>
+            </figure>
+          </div>
+        </article>
+      </section>
     </main>
 
     <footer class="colophon">
