@@ -83,7 +83,7 @@ function chart3(data, continents) {
     .attr("stroke", colors.paper).attr("stroke-width", 2)
     .attr("d", s => barPath(x(s.start), s.top + 12, x(s.start + s.value) - x(s.start), 48, s.last ? 4 : 0));
 
-  row.append("text").attr("class", "t-footnote strong ink")
+  row.append("text").attr("class", "t-footnote strong ink halo")
     .attr("x", d => x(d.score) + 12).attr("y", d => d.top + 36)
     .attr("dominant-baseline", "central")
     .text(d => formatScore(d.score));

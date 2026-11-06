@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>World Happiness Dashboards</title>
   <meta name="claude:viewport-fit-sides" content="cover">
-  <meta name="description" content="Open Skill 2 for INFO 4602: the Open Skill 1 World Happiness dashboards rebuilt in D3.js with the interactions Figma couldn't do.">
+  <meta name="description" content="Open Skill 2 for INFO 4602: the Open Skill 1 World Happiness dashboards rebuilt in D3.js with the interactions Figma couldn’t do.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/site.css">
 </head>
@@ -17,7 +17,7 @@
     <header class="masthead">
       <p class="eyebrow">INFO 4602 · Open Skill 2 · World Happiness surveys 2019–2025</p>
       <h1>World Happiness, rebuilt in D3</h1>
-      <p class="lede">The three dashboards from Open Skill 1, first prototyped in Figma, now coded in D3.js with the interactions Figma couldn't do: tooltips that follow your cursor, every country's line to explore, one continent filter that links all three charts, and an animated switch between the biggest risers and decliners.</p>
+      <p class="lede">The three dashboards from Open Skill 1, first prototyped in Figma, now coded in D3.js with the interactions Figma couldn’t do: tooltips that follow your cursor, every country’s line to explore, one continent filter that links all three charts, and an animated switch between the biggest risers and decliners.</p>
     </header>
 
     <nav class="filter-bar" aria-label="Filter all charts by continent">
@@ -41,8 +41,10 @@
             <p class="dek">Top and bottom 10 ranked countries</p>
           </div>
         </header>
-        <div class="chart"><svg aria-labelledby="chart1-title" role="group"></svg></div>
-        <p class="empty" hidden></p>
+        <div class="chart-wrap">
+          <div class="chart"><svg aria-labelledby="chart1-title" role="group"></svg></div>
+          <p class="empty" role="status"></p>
+        </div>
         <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span><span>1 / 3</span></footer>
       </section>
 
@@ -55,12 +57,14 @@
           </div>
           <div class="segmented" id="view" role="group" aria-label="Highlighted countries" data-view="risers">
             <span class="thumb" aria-hidden="true"></span>
-            <button type="button" id="view-risers" data-view="risers" aria-pressed="true">Biggest risers</button>
-            <button type="button" id="view-decliners" data-view="decliners" aria-pressed="false">Biggest decliners</button>
+            <button type="button" id="view-risers" data-view="risers" data-label="Biggest risers" aria-pressed="true">Biggest risers</button>
+            <button type="button" id="view-decliners" data-view="decliners" data-label="Biggest decliners" aria-pressed="false">Biggest decliners</button>
           </div>
         </header>
-        <div class="chart"><svg aria-labelledby="chart2-title" role="group"></svg></div>
-        <p class="empty" hidden></p>
+        <div class="chart-wrap">
+          <div class="chart"><svg aria-labelledby="chart2-title" role="group"></svg></div>
+          <p class="empty" role="status"></p>
+        </div>
         <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · surveys 2019–2025</span><span>2 / 3</span></footer>
       </section>
 
@@ -72,8 +76,10 @@
           </div>
         </header>
         <ul class="legend" aria-label="Legend"></ul>
-        <div class="chart"><svg aria-labelledby="chart3-title" role="group"></svg></div>
-        <p class="empty" hidden></p>
+        <div class="chart-wrap">
+          <div class="chart"><svg aria-labelledby="chart3-title" role="group"></svg></div>
+          <p class="empty" role="status"></p>
+        </div>
         <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span><span>3 / 3</span></footer>
       </section>
 
@@ -107,7 +113,7 @@
               <figcaption><strong>Figma.</strong> The toggle was two variants swapped, and tooltips collided at the ends of the lines.</figcaption>
             </figure>
             <figure>
-              <div class="shot" style="--h: 760"><img src="assets/d3/chart2-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 2 with Afghanistan's grey line hovered: the line darkens, a crosshair and marker sit on it, and a tooltip names it."></div>
+              <div class="shot" style="--h: 760"><img src="assets/d3/chart2-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 2 with Afghanistan’s grey line hovered: the line darkens, a crosshair and marker sit on it, and a tooltip names it."></div>
               <figcaption><strong>D3.</strong> The toggle animates the lines themselves. Point near any country’s line and it lights up and names itself.</figcaption>
             </figure>
           </div>
@@ -121,7 +127,7 @@
               <figcaption><strong>Figma.</strong> Each frame stood alone, with its data pasted in by a script, so nothing could link the three charts.</figcaption>
             </figure>
             <figure>
-              <div class="shot" style="--h: 680"><img src="assets/d3/chart3-d3.png" width="1760" height="680" loading="lazy" alt="The D3 chart 3 with Europe selected in the continent filter: Finland's row stays solid and the others fade."></div>
+              <div class="shot" style="--h: 680"><img src="assets/d3/chart3-d3.png" width="1760" height="680" loading="lazy" alt="The D3 chart 3 with Europe selected in the continent filter: Finland’s row stays solid and the others fade."></div>
               <figcaption><strong>D3.</strong> All three charts draw from one data file, so one continent filter changes them together. Here, Europe is selected.</figcaption>
             </figure>
           </div>
@@ -130,8 +136,8 @@
     </main>
 
     <footer class="colophon">
-      <p><strong>Data.</strong> The course's World Happiness CSV (World Happiness Report, Gallup World Poll), turned into chart data by Open Skill 1's <code>prep_data.py</code>. The regenerated file matches Open Skill 1's verified copy byte for byte (SHA-256 <code>22c8681b…</code>), and the page checks the numbers again before drawing.</p>
-      <p><strong>Design.</strong> Colors, type and spacing come from the Open Skill 1 Figma file's variables, exported as CSS tokens.</p>
+      <p><strong>Data.</strong> The course's World Happiness CSV (World Happiness Report, Gallup World Poll), turned into chart data by Open Skill 1’s <code>prep_data.py</code>. The regenerated file matches Open Skill 1’s verified copy byte for byte (SHA-256 <code>22c8681b…</code>), and the page checks the numbers again before drawing.</p>
+      <p><strong>Design.</strong> Colors, type and spacing come from the Open Skill 1 Figma file’s variables, exported as CSS tokens.</p>
       <p><strong>Code.</strong> D3.js v7. Written with Claude (Anthropic) and directed by David Doctor, who chose every chart and interaction.</p>
     </footer>
   </div>

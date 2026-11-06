@@ -169,8 +169,55 @@ def main():
             page.screenshot(path=f"{args.shots}/africa.png", full_page=True)
         page.click("#continent-oceania")
         page.wait_for_timeout(450)
-        check("chart 1 says when a continent has no countries", page.is_visible("#chart1 .empty"), page.text_content("#chart1 .empty"))
+        shown = page.eval_on_selector("#chart1 .empty", "e => ({ on: e.classList.contains('on'), text: e.textContent, opacity: +getComputedStyle(e).opacity, role: e.getAttribute('role'), pointer: getComputedStyle(e).pointerEvents })")
+        check("chart 1 says when a continent has no countries", shown["on"] and "Oceania" in shown["text"] and shown["opacity"] == 1 and shown["role"] == "status", shown)
+        check("the empty message never blocks the chart", shown["pointer"] == "none", shown)
+        leaders = page.eval_on_selector_all("#chart2 svg > g:not([aria-hidden]) line", "l => l.map(x => x.getAttribute('opacity'))")
+        check("chart 2 leader lines fade with their labels", leaders and "0.24" in leaders, leaders)
         page.click("#continent-all")
+        page.wait_for_timeout(450)
+        cleared = page.eval_on_selector("#chart1 .empty", "e => e.textContent")
+        check("the empty message clears", cleared == "", cleared)
+
+        # controls don't move when pressed: the toggle and the chips keep their size in both states
+        size = "e => e.getBoundingClientRect().width"
+        one = page.eval_on_selector("#view", size)
+        page.click("#view-risers")
+        page.wait_for_timeout(350)
+        two = page.eval_on_selector("#view", size)
+        check("the toggle keeps its width on click", abs(one - two) < 0.1, (one, two))
+        before = page.eval_on_selector("#continent-north-america", size)
+        page.click("#continent-north-america")
+        after = page.eval_on_selector("#continent-north-america", size)
+        check("a chip keeps its width when pressed", abs(before - after) < 0.1, (before, after))
+        page.click("#continent-all")
+        page.wait_for_timeout(350)
+
+        # hovering chart 2 repaints only the lines that changed, not all of them
+        page.locator("#chart2 svg").scroll_into_view_if_needed()
+        svg = page.locator("#chart2 svg").bounding_box()
+        scale = svg["width"] / 1760
+        page.evaluate("""() => {
+            window.pathWrites = 0;
+            window.pathWatcher = new MutationObserver(m => { window.pathWrites += m.filter(x => ['stroke', 'stroke-width', 'opacity'].includes(x.attributeName)).length; });
+            for (const p of document.querySelectorAll('#chart2 svg > g[aria-hidden] path')) window.pathWatcher.observe(p, { attributes: true });
+        }""")
+        for i in range(8):
+            page.mouse.move(svg["x"] + (300 + i * 120 - 80) * scale, svg["y"] + (520 + i * 20 - 200) * scale)
+        page.wait_for_timeout(100)
+        writes = page.evaluate("window.pathWatcher.disconnect(), window.pathWrites")
+        check("a hover repaints only the lines that changed", 0 < writes <= 8 * 2 * 3, writes)
+        page.mouse.move(5, 5)
+
+        # the filter bar has an edge once it sticks, and none before
+        page.evaluate("window.scrollTo(0, 0)")
+        page.wait_for_timeout(100)
+        flat = page.eval_on_selector(".filter-bar", "b => b.classList.contains('is-stuck')")
+        page.evaluate("window.scrollTo(0, 1200)")
+        page.wait_for_timeout(300)
+        stuck = page.eval_on_selector(".filter-bar", "b => [b.classList.contains('is-stuck'), getComputedStyle(b).boxShadow]")
+        check("the filter bar becomes a layer only when stuck", not flat and stuck[0] and stuck[1] != "none", (flat, stuck))
+        page.evaluate("window.scrollTo(0, 0)")
 
         # phone width: the page itself never scrolls sideways
         page.set_viewport_size({"width": 390, "height": 844})
@@ -179,9 +226,20 @@ def main():
         check("no sideways page scroll at 390px", wide <= 390, wide)
         if args.shots:
             page.screenshot(path=f"{args.shots}/phone.png", full_page=False)
+
+        # someone who asks for less motion gets no fades and no delays, including the hover grace
+        calm = browser.new_context(reduced_motion="reduce").new_page()
+        calm.goto(url, wait_until="networkidle")
+        calm.wait_for_selector("#chart3 .segment")
+        reduced = calm.evaluate("""() => ['#chart1 .bar', '#chart3 .segment', '.tooltip', '.filter-bar', '.empty', '.segmented button'].map(s => {
+            const c = getComputedStyle(document.querySelector(s));
+            return [s, c.transitionDuration, c.transitionDelay];
+        })""")
+        reduced_ok = all(float(t.strip().rstrip("s")) == 0 for _, d, w in reduced for t in (d + "," + w).split(","))
         browser.close()
 
     check("no console errors", not errors, errors)
+    check("reduced motion has no delayed hover fades", reduced_ok, reduced)
     server.shutdown()
     passed = sum(ok for _, ok, _ in results)
     for name, ok, detail in results:

@@ -61,6 +61,8 @@ function chart2(data, continents) {
     .attr("fill", "none")
     .attr("stroke-linejoin", "round").attr("stroke-linecap", "round")
     .attr("d", s => line(s.scores));
+  const nodeOf = new Map();
+  paths.each(function (s) { nodeOf.set(s, this); });
 
   // dots at 2019 and 2025 for the ten countries the toggle can highlight
   const ends = series.filter(s => risers.has(s.country) || decliners.has(s.country))
@@ -106,8 +108,7 @@ function chart2(data, continents) {
     text.append("tspan").attr("class", "muted").attr("dx", 12).text(d => formatChange(d.s.change));
     // keyboard: tab to a label to light up its line, with the same tooltip as hovering
     label.on("focus", function (event, d) {
-      state.hover = d.s;
-      paint(false);
+      paintHover(d.s);
       showTooltipAt(this, d.s.country, tip(d.s, 2025));
     }).on("blur", leave);
     labelSets[view] = group;
@@ -146,8 +147,7 @@ function chart2(data, continents) {
     }
     // only a hover within 28 units of a line (about 18 screen pixels on a laptop)
     if (distance > 28) return leave();
-    state.hover = nearest;
-    paint(false);
+    paintHover(nearest);
     crosshair.attr("x1", x(year)).attr("x2", x(year)).attr("visibility", "visible");
     marker.attr("cx", x(year)).attr("cy", y(nearest.scores[year - 2019]))
       .attr("fill", highlighted(nearest) ? colors.focus : colors.muted)
@@ -156,29 +156,47 @@ function chart2(data, continents) {
   }
 
   function leave() {
-    state.hover = null;
     crosshair.attr("visibility", "hidden");
     marker.attr("visibility", "hidden");
     hideTooltip();
-    paint(false);
+    paintHover(null);
+  }
+
+  // how one line should look right now, from the state
+  const strokeOf = s => highlighted(s) ? colors.focus
+    : s === state.hover ? colors.muted
+    : state.continent !== "All" && included(s) ? colors.axis
+    : colors.context;
+  const widthOf = s => highlighted(s) ? (s === state.hover ? 4 : 3) : s === state.hover ? 2.5 : 1.5;
+  const opacityOf = s => included(s) ? 1 : faded;
+
+  // hovering happens dozens of times a minute, so it repaints only the two lines that changed.
+  // that also leaves a running toggle or filter animation alone on the other lines
+  function paintHover(next) {
+    const previous = state.hover;
+    if (previous === next) return;
+    state.hover = next;
+    for (const s of [previous, next]) {
+      if (!s) continue;
+      d3.select(nodeOf.get(s)).interrupt()
+        .attr("stroke", strokeOf(s)).attr("stroke-width", widthOf(s)).attr("opacity", opacityOf(s));
+    }
+    // highlighted lines draw on top of the grey ones, and the hovered line on top of everything
+    if (previous) paths.filter(highlighted).raise();
+    if (next) d3.select(nodeOf.get(next)).raise();
   }
 
   // paint sets every line, dot and label from the state. the toggle and the filter animate it
-  // with a d3 transition; hovering repaints instantly, since it happens dozens of times a minute
+  // with a d3 transition
   function paint(animate) {
     const t = animate ? svg.transition().duration(motion.duration).ease(motion.ease) : null;
     if (!animate) { paths.interrupt(); dots.interrupt(); }
-    const filtering = state.continent !== "All";
 
     (animate ? paths.transition(t) : paths)
-      .attr("stroke", s => highlighted(s) ? colors.focus
-        : s === state.hover ? colors.muted
-        : filtering && included(s) ? colors.axis
-        : colors.context)
-      .attr("stroke-width", s => highlighted(s) ? (s === state.hover ? 4 : 3) : s === state.hover ? 2.5 : 1.5)
-      .attr("opacity", s => included(s) ? 1 : faded);
+      .attr("stroke", strokeOf)
+      .attr("stroke-width", widthOf)
+      .attr("opacity", opacityOf);
 
-    // highlighted lines draw on top of the grey ones, and the hovered line on top of everything
     paths.filter(highlighted).raise();
     if (state.hover) paths.filter(s => s === state.hover).raise();
 
@@ -193,9 +211,10 @@ function chart2(data, continents) {
         .attr("opacity", on ? 1 : 0)
         .attr("transform", on ? "translate(0,0)" : `translate(0,${view === "risers" ? -10 : 10})`);
       group.attr("pointer-events", on ? null : "none");
-      group.selectAll(".label")
-        .attr("tabindex", on ? 0 : -1)
-        .attr("opacity", d => included(d.s) ? 1 : faded * 2);
+      // labels and their leader lines fade on the same clock as the lines they name
+      const named = group.selectAll(".label, line");
+      (animate ? named.transition(t) : named).attr("opacity", d => included(d.s) ? 1 : faded * 2);
+      group.selectAll(".label").attr("tabindex", on ? 0 : -1);
     }
   }
 

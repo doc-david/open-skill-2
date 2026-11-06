@@ -49,9 +49,10 @@ body::before {
 }
 
 /* masthead */
-.masthead { display: grid; gap: 12px; padding-inline: 8px; max-width: 900px; }
+/* tight inside the group, more room before the filter it introduces */
+.masthead { display: grid; max-width: 900px; margin-bottom: 12px; }
 .eyebrow {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -59,7 +60,7 @@ body::before {
   color: var(--color-text-secondary);
 }
 h1 {
-  margin: 0;
+  margin: 0 0 16px;
   font-size: clamp(34px, 5.2vw, 56px);
   line-height: 1.05;
   font-weight: 700;
@@ -68,26 +69,39 @@ h1 {
 }
 .lede {
   margin: 0;
-  max-width: 68ch;
+  max-width: 59ch; /* inter fits about 1.37 characters per ch, so this is about 80 characters */
   font-size: clamp(17px, 1.6vw, 19px);
   line-height: 1.55;
+  text-wrap: pretty;
   color: var(--color-text-secondary);
 }
 
 /* continent filter: one row above everything it scopes, sticky so it stays in reach */
 .filter-bar {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
   z-index: 5;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  margin-inline: -4px;
+  margin-inline: -12px;
+  margin-bottom: -12px;
   border-radius: 16px;
-  background: rgba(245, 245, 247, 0.82);
-  backdrop-filter: saturate(180%) blur(16px);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+.filter-bar.is-stuck {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .filter-bar.is-stuck { background: var(--color-bg-primary); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+/* on a very short window the bar would cover too much of the page, so it scrolls away */
+@media (max-height: 500px) {
+  .filter-bar, .filter-bar.is-stuck { position: static; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 /* ink, not grey: the bar is see-through, so text scrolling under it lowers the contrast */
 .filter-label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); flex: none; }
@@ -118,7 +132,6 @@ h1 {
   background: var(--color-text-primary);
   border-color: var(--color-text-primary);
   color: var(--color-bg-primary);
-  font-weight: 600;
 }
 .chips button:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
@@ -154,7 +167,7 @@ h2 {
 }
 .dek {
   margin: 6px 0 0;
-  font-size: clamp(16px, 1.7vw, 19px);
+  font-size: clamp(15px, 1.3vw, 17px);
   color: var(--color-text-secondary);
 }
 .note { margin: 6px 0 0; font-size: 14px; color: var(--color-text-secondary); }
@@ -194,8 +207,19 @@ h2 {
   color: var(--color-text-primary);
   cursor: pointer;
   white-space: nowrap;
+  transition: transform 120ms var(--ease-out);
 }
 .segmented button[aria-pressed="true"] { font-weight: 600; }
+.segmented button:active { transform: scale(0.97); }
+/* an invisible bold copy of the label reserves the width, so the control doesn't resize on click */
+.segmented button::after {
+  content: attr(data-label);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 600;
+}
 
 /* chart 3's legend: one row of swatches in the stack's left-to-right order */
 .legend {
@@ -225,11 +249,27 @@ h2 {
   border-top: 1px solid var(--color-bg-secondary);
   padding-top: 14px;
 }
+/* the message sits on the chart it explains. it never catches the pointer, so the chart stays hoverable */
+.chart-wrap { position: relative; min-width: 0; }
 .empty {
-  margin: -8px 0 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-bg-primary);
+  box-shadow: 0 0 0 1px var(--color-line-grid), 0 4px 16px rgba(0, 0, 0, 0.08);
   font-size: 14px;
-  color: var(--color-text-secondary);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out);
 }
+.empty.on { opacity: 1; }
 
 /* figma vs d3: each pair is cropped to the same chart region, so the two line up point for point */
 .compare { gap: 40px; }
@@ -237,7 +277,7 @@ h2 {
 .pair h3 { margin: 0; font-size: 19px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
 .pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .pair figure { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
-.pair figcaption { font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; }
+.pair figcaption { font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; text-wrap: pretty; }
 .pair figcaption strong { color: var(--color-text-primary); font-weight: 600; }
 .shot {
   position: relative;
@@ -260,12 +300,12 @@ h2 {
 .colophon {
   display: grid;
   gap: 10px;
-  max-width: 76ch;
-  padding: 8px 8px 0;
+  max-width: 60ch;
+  padding-top: 8px;
   font-size: 14px;
   color: var(--color-text-secondary);
 }
-.colophon p { margin: 0; }
+.colophon p { margin: 0; text-wrap: pretty; }
 .colophon strong { color: var(--color-text-primary); font-weight: 600; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
 
@@ -278,7 +318,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 }
 
 /* svg text uses the figma text styles at figma's own size; the viewbox scales them with the chart */
-.chart text { font-family: var(--font-family); }
+.chart text { font-family: var(--font-family); font-variant-numeric: tabular-nums; }
 .t-footnote { font-size: var(--font-size-footnote); }
 .t-caption { font-size: var(--font-size-caption-1); }
 .strong { font-weight: 600; }
@@ -298,6 +338,13 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .row:focus-visible .bar, .row:focus-visible .segment { stroke: var(--color-text-primary); stroke-width: 3px; }
 .label:focus { outline: none; }
 .label:focus-visible text { text-decoration: underline; text-decoration-thickness: 2px; }
+
+/* crossing the small gap between two bars shouldn't flash the whole chart, so stepping forward
+   again waits 100ms. only for people who haven't asked for less motion */
+@media (prefers-reduced-motion: no-preference) {
+  .chart svg:not(.hovering) .bar, .chart svg:not(.hovering) .value, .chart svg:not(.hovering) .segment { transition: opacity 120ms ease 100ms; }
+  .tooltip:not(.visible) { transition-delay: 100ms; }
+}
 
 /* the one shared tooltip (apple style: dark, 12px radius, values first) */
 .tooltip {
@@ -322,7 +369,8 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 :focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .segmented .thumb, .chips button, .tooltip, .chart .bar, .chart .value, .chart .segment { transition-duration: 0ms; }
+  .segmented .thumb, .segmented button, .chips button, .tooltip, .chart .bar, .chart .value, .chart .segment, .empty, .filter-bar { transition-duration: 0ms; }
+  .chips button:active, .segmented button:active { transform: none; }
 }
 
 @media (max-width: 640px) {

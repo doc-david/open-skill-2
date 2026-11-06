@@ -29,7 +29,7 @@ function fingerprint(data) {
 Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) => {
   if (fingerprint(data) !== verified) {
     d3.select(".panels").html("").append("p").attr("class", "error")
-      .text("This chart data doesn't match Open Skill 1's verified numbers, so the charts aren't drawn.");
+      .text("This chart data doesn’t match Open Skill 1’s verified numbers, so the charts aren’t drawn.");
     return;
   }
 
@@ -46,9 +46,10 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
     chips.attr("aria-pressed", function () { return String(this.dataset.continent === continent); });
     for (const [id, chart] of Object.entries(charts)) {
       const shown = chart.filter(continent);
+      // role="status" announces the text when it changes, so it's only set when there's something to say
       d3.select(`#${id} .empty`)
-        .attr("hidden", shown ? "" : null)
-        .text(`No countries from ${continent} on this chart.`);
+        .classed("on", !shown)
+        .text(shown ? "" : `No countries from ${continent} on this chart.`);
     }
   });
 
@@ -60,4 +61,17 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
     toggle.selectAll("button").attr("aria-pressed", function () { return String(this.dataset.view === view); });
     charts.chart2.view(view);
   });
+
+  // the filter bar sits flat on the page, and turns into a floating layer once it sticks
+  const bar = document.querySelector(".filter-bar");
+  const stuckAt = parseFloat(getComputedStyle(bar).top);
+  let queued = false;
+  function updateBar() {
+    queued = false;
+    bar.classList.toggle("is-stuck", window.scrollY > 0 && bar.getBoundingClientRect().top <= stuckAt + 0.5);
+  }
+  window.addEventListener("scroll", () => {
+    if (!queued) { queued = true; requestAnimationFrame(updateBar); }
+  }, { passive: true });
+  updateBar();
 });
