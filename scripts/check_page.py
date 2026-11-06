@@ -142,7 +142,10 @@ def main():
         if args.shots:
             page.locator("#chart2").screenshot(path=f"{args.shots}/chart2-decliners.png")
 
-        # interaction 4: the continent filter fades the other continents on every chart
+        # interaction 4: the continent filter fades the other continents on every chart.
+        # rows must start with opacity 1, or the first transition starts from 0 and every row blinks
+        start = page.eval_on_selector_all("#chart1 .row, #chart3 .row", "r => r.map(x => x.getAttribute('opacity'))")
+        check("rows start at opacity 1 (no first-click blink)", all(o == "1" for o in start), start)
         page.click("#continent-africa")
         page.wait_for_timeout(450)
         faded = page.eval_on_selector_all("#chart1 .row", "r => r.map(x => [x.__data__.country, +x.getAttribute('opacity')])")

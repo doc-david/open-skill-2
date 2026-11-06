@@ -53,8 +53,10 @@ function chart3(data, continents) {
     .attr("x", 152).attr("y", 915).attr("dominant-baseline", "central")
     .text("Score (0–10)");
 
+  // opacity starts at 1 so the filter's transition has a value to start from
   const row = svg.append("g").selectAll("g").data(rows).join("g")
     .attr("class", "row")
+    .attr("opacity", 1)
     .attr("tabindex", 0)
     .attr("aria-label", d => `${d.country}, ${d.continent}, rank ${d.rank}, score ${formatScore(d.score)}: ` +
       d.segments.map(s => `${factors[s.name].label} ${formatScore(s.value)}`).join(", "));

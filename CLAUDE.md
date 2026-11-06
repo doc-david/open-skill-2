@@ -25,7 +25,7 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 
 ## How to run and check
 - Serve: `python -m http.server 8000`, then open http://localhost:8000
-- Checks (the playbook's script checks, run them before every push): `pip install playwright pandas` and `python -m playwright install chromium`, then `python scripts/check_page.py --shots shots`. The first draft passes 19/19
+- Checks (the playbook's script checks, run them before every push): `pip install playwright pandas` and `python -m playwright install chromium`, then `python scripts/check_page.py --shots shots`. The first draft passes 20/20
 - Preview bundle for claude.ai: `python scripts/bundle.py` writes `dist/world-happiness.html` (git-ignored)
 
 ## Refinement brief (what David wants from this session)
@@ -37,6 +37,7 @@ Polish the first draft with Impeccable and the other design skills (apple-design
 - Copy is David's call: chart 2's grey-lines note was drafted by Claude, so ask him to confirm or reword it
 
 ## Known issues
+- Checker agent (clean context, Nov 6): all six Done means lines pass. It found three issues, all fixed: rows blinked on the first filter click, the sticky bar's grey label lost contrast over scrolling text, and hover fades ignored reduced motion
 - The tooltip's secondary text color `#c7c7cc` is a literal (Figma's `text/on-dark-secondary` wasn't in the pulled variables)
 - No data tables yet. No Figma screenshots in the repo yet
 - Interactions were picked by David on Nov 6: cursor-following tooltips, hovering any grey line, a continent filter linking all three charts, and an animated risers/decliners toggle

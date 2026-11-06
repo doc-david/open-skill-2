@@ -37,8 +37,10 @@ function chart1(data, continents) {
     .text(`Ranks ${bars.top10[9].rank + 1}–${bars.bottom10[0].rank - 1} not shown`);
 
   // one group per country: rank, name, bar and value. the data join makes 20 of them
+  // opacity starts at 1 so the filter's transition has a value to start from
   const row = svg.append("g").selectAll("g").data(rows).join("g")
     .attr("class", "row")
+    .attr("opacity", 1)
     .attr("tabindex", 0)
     .attr("aria-label", d => `${d.country}: rank ${d.rank} of ${bars.total_ranked}, score ${formatScore(d.score)}, change since 2019 ${formatChange(d.change_since_2019)}`);
 

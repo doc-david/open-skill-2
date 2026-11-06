@@ -89,7 +89,8 @@ h1 {
   backdrop-filter: saturate(180%) blur(16px);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
 }
-.filter-label { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); flex: none; }
+/* ink, not grey: the bar is see-through, so text scrolling under it lowers the contrast */
+.filter-label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); flex: none; }
 .chips {
   display: flex;
   gap: 6px;
@@ -295,7 +296,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 :focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .segmented .thumb, .chips button, .tooltip { transition-duration: 0ms; }
+  .segmented .thumb, .chips button, .tooltip, .chart .bar, .chart .value, .chart .segment { transition-duration: 0ms; }
 }
 
 @media (max-width: 640px) {
