@@ -52,6 +52,23 @@ def serve():
     return server
 
 
+def open_view(page, name):
+    """go to #map or #plate-n the way a link does, and wait for that view to show"""
+    target = "#view-map" if name == "map" else f"#chart{name[-1]}"
+    page.evaluate(f"location.hash = '#{name}'")
+    page.wait_for_selector(f"{target}:not([hidden])")
+    page.wait_for_timeout(280)
+
+
+def to_screen(page, chart, x, y):
+    """a point in the chart's figma coordinates, in window pixels. the svg letterboxes its viewbox
+    to fit the plate, so the box's width alone doesn't give the scale"""
+    return page.evaluate("""([chart, x, y]) => {
+        const m = document.querySelector(chart + ' svg').getScreenCTM();
+        return [m.a * x + m.e, m.d * y + m.f];
+    }""", [chart, x, y])
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
@@ -68,11 +85,12 @@ def main():
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" and not any(f in m.location.get("url", "") for f in fonts) else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(url, wait_until="networkidle")
-        page.wait_for_selector("#chart3 .segment", timeout=10000)
+        page.wait_for_selector("#chart3 .segment", state="attached", timeout=10000)
         off = page.eval_on_selector_all("#chart2 svg > g[aria-hidden='true']", "gs => gs.filter(g => g.querySelector('.label')).map(g => g.getAttribute('visibility'))")
         check("the hidden label set is hidden from first paint", off == ["hidden"], off)
 
         # chart 1: 20 bars, each value label = score at 2 decimals, each bar 128px per point
+        open_view(page, "plate-1")
         c1 = data["chart1_ranked_bar"]["top10"] + data["chart1_ranked_bar"]["bottom10"]
         drawn = page.eval_on_selector_all("#chart1 .row", """rows => rows.map(r => ({
             value: r.querySelector('.value').textContent,
@@ -95,6 +113,7 @@ def main():
         check("chart 2 note counts the other lines", others == str(len(lines["context_series"]) + len(lines["fallers"])), others)
 
         # chart 3: 42 segments, totals at 2 decimals, each row ends at score x 128px
+        open_view(page, "plate-3")
         rows = data["chart3_stacked"]["rows"]
         seg = page.eval_on_selector_all("#chart3 .segment", "s => s.length")
         check("chart 3 draws 42 segments", seg == 42, seg)
@@ -105,9 +124,10 @@ def main():
         check("chart 3 rows end at score x 128px", not bad, bad)
 
         # no text anywhere may contain a brace, NaN, undefined or null
-        text = page.inner_text("main")
+        text = page.text_content("main")
         check("no template or NaN text", not any(t in text for t in ["{", "}", "NaN", "undefined", "null"]))
 
+        open_view(page, "map")
         # figma vs d3: every still loads, has alt text, and each pair shows the same chart region
         page.eval_on_selector_all(".compare img", "imgs => imgs.forEach(i => { i.loading = 'eager'; })")
         page.wait_for_function("[...document.querySelectorAll('.compare img')].every(i => i.complete)")
@@ -153,9 +173,12 @@ def main():
 
         if args.shots:
             Path(args.shots).mkdir(parents=True, exist_ok=True)
-            page.screenshot(path=f"{args.shots}/full.png", full_page=True)
+            page.screenshot(path=f"{args.shots}/map.png")
 
         # interaction 1: the tooltip follows the pointer on a chart 1 bar
+        open_view(page, "plate-1")
+        if args.shots:
+            page.screenshot(path=f"{args.shots}/plate-1.png")
         bar = page.locator("#chart1 .bar").first
         box = bar.bounding_box()
         page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
@@ -169,17 +192,13 @@ def main():
 
         # interaction 2: hovering a grey line in chart 2 names it
         page.mouse.move(5, 5)
-        page.locator("#chart2 svg").scroll_into_view_if_needed()
-        svg = page.locator("#chart2 svg").bounding_box()
-        scale = svg["width"] / 1760
+        open_view(page, "plate-2")
         target = next(s for s in lines["context_series"] if s["country"] == "Brazil")
-        px = svg["x"] + (176 + 3 * 212 - 80) * scale
-        py = svg["y"] + (910 - target["scores"][3] * 62 - 200) * scale
-        page.mouse.move(px, py)
+        page.mouse.move(*to_screen(page, "#chart2", 176 + 3 * 212, 910 - target["scores"][3] * 62))
         tip = page.inner_text(".tooltip")
         check("chart 2 hover names a grey line", tip.split("\n")[0] != "" and "2022:" in tip, tip.replace("\n", " | "))
         if args.shots:
-            page.locator("#chart2").screenshot(path=f"{args.shots}/chart2-hover.png")
+            page.screenshot(path=f"{args.shots}/plate-2-hover.png")
         page.mouse.move(5, 5)
 
         # interaction 3: the toggle swaps which five lines are forest
@@ -188,7 +207,7 @@ def main():
         forest = page.eval_on_selector_all("#chart2 svg > g[aria-hidden] path", "p => p.filter(x => ['#18322a', 'rgb(24, 50, 42)'].includes(x.getAttribute('stroke'))).map(x => x.__data__.country)")
         check("toggle highlights the decliners", sorted(forest) == sorted(s["country"] for s in lines["fallers"]), forest)
         if args.shots:
-            page.locator("#chart2").screenshot(path=f"{args.shots}/chart2-decliners.png")
+            page.screenshot(path=f"{args.shots}/plate-2-decliners.png")
 
         # interaction 4: the continent filter fades the other continents on every chart.
         # rows must start with opacity 1, or the first transition starts from 0 and every row blinks
@@ -202,7 +221,10 @@ def main():
         rows3 = page.eval_on_selector_all("#chart3 .row", "r => r.map(x => [x.__data__.country, +x.getAttribute('opacity')])")
         check("filter keeps only Mauritius solid on chart 3", [c for c, o in rows3 if o == 1] == ["Mauritius"], rows3)
         if args.shots:
-            page.screenshot(path=f"{args.shots}/africa.png", full_page=True)
+            page.screenshot(path=f"{args.shots}/plate-2-africa.png")
+            open_view(page, "plate-3")
+            page.screenshot(path=f"{args.shots}/plate-3-africa.png")
+            open_view(page, "plate-2")
         visible = lambda chart: page.eval_on_selector_all(f"{chart} .data-table tbody tr", "rows => rows.filter(r => !r.hidden).map(r => r.__data__.country)")
         african = lambda names: all(continents[n] == "Africa" for n in names)
         one, two, three = visible("#chart1"), visible("#chart2"), visible("#chart3")
@@ -238,37 +260,31 @@ def main():
         page.wait_for_timeout(350)
 
         # hovering chart 2 repaints only the lines that changed, not all of them
-        page.locator("#chart2 svg").scroll_into_view_if_needed()
-        svg = page.locator("#chart2 svg").bounding_box()
-        scale = svg["width"] / 1760
         page.evaluate("""() => {
             window.pathWrites = 0;
             window.pathWatcher = new MutationObserver(m => { window.pathWrites += m.filter(x => ['stroke', 'stroke-width', 'opacity'].includes(x.attributeName)).length; });
             for (const p of document.querySelectorAll('#chart2 svg > g[aria-hidden] path')) window.pathWatcher.observe(p, { attributes: true });
         }""")
         for i in range(8):
-            page.mouse.move(svg["x"] + (300 + i * 120 - 80) * scale, svg["y"] + (520 + i * 20 - 200) * scale)
+            page.mouse.move(*to_screen(page, "#chart2", 300 + i * 120, 520 + i * 20))
         page.wait_for_timeout(100)
         writes = page.evaluate("window.pathWatcher.disconnect(), window.pathWrites")
         check("a hover repaints only the lines that changed", 0 < writes <= 8 * 2 * 3, writes)
         page.mouse.move(5, 5)
 
         # screen readers only get the highlighted set of labels, and rows and labels have a role
-        page.evaluate("window.scrollTo(0, 0)")
         hidden = page.eval_on_selector_all("#chart2 svg > g", "gs => gs.filter(g => g.querySelector('.label')).map(g => [g.getAttribute('aria-hidden'), g.getAttribute('visibility'), g.querySelector('.label').__data__.s.country])")
         check("the hidden set of chart 2 labels is hidden from everyone", sorted(h[:2] for h in hidden if h[0]) == [["true", "hidden"]] and sum(1 for h in hidden if not h[0]) == 1, hidden)
         roles = page.eval_on_selector_all("#chart1 .row, #chart2 .label, #chart3 .row", "e => e.filter(x => x.getAttribute('role') !== 'img' || !x.getAttribute('aria-label')).length")
         check("rows and labels have a role and a name", roles == 0, roles)
 
-        # the filter bar has an edge once it sticks, and none before
-        page.evaluate("window.scrollTo(0, 0)")
+        # the hud stays put while a view scrolls under it, and the page itself never scrolls
+        open_view(page, "map")
+        page.evaluate("document.querySelector('.views').scrollTop = 900")
         page.wait_for_timeout(100)
-        flat = page.eval_on_selector(".filter-bar", "b => b.classList.contains('is-stuck')")
-        page.evaluate("window.scrollTo(0, 1200)")
-        page.wait_for_timeout(300)
-        stuck = page.eval_on_selector(".filter-bar", "b => [b.classList.contains('is-stuck'), getComputedStyle(b).boxShadow]")
-        check("the filter bar becomes a layer only when stuck", not flat and stuck[0] and stuck[1] != "none", (flat, stuck))
-        page.evaluate("window.scrollTo(0, 0)")
+        held = page.evaluate("[document.querySelector('.hud').getBoundingClientRect().top, window.scrollY, document.querySelector('.views').scrollTop > 0]")
+        check("the hud stays put while the map scrolls under it", held[0] == 0 and held[1] == 0 and held[2], held)
+        page.evaluate("document.querySelector('.views').scrollTop = 0")
 
         # phone width: the page itself never scrolls sideways
         page.set_viewport_size({"width": 390, "height": 844})
@@ -278,50 +294,59 @@ def main():
         if args.shots:
             page.screenshot(path=f"{args.shots}/phone.png", full_page=False)
 
-        # keyboard paths, on a fresh page and a short window: tab through everything, forward and back
+        # keyboard paths, on a short window: tab through each view from the top, forward and back
         keys = browser.new_page(viewport={"width": 1440, "height": 700})
-        keys.goto(url, wait_until="networkidle")
-        keys.wait_for_selector("#chart3 .segment")
         describe = """() => {
             const e = document.activeElement;
             const b = e.getBoundingClientRect();
-            const bar = document.querySelector('.filter-bar').getBoundingClientRect();
+            const hud = document.querySelector('.hud').getBoundingClientRect();
             const tip = document.querySelector('.tooltip');
             return {
-                name: e.id || (e.tagName === 'SUMMARY' ? 'summary' : e.classList.contains('row') ? 'row' : e.classList.contains('label') ? 'label' : e.tagName),
-                under: !e.closest('.filter-bar') && b.top < bar.bottom - 1 && bar.top <= 8.5,
+                name: e.id || (e.tagName === 'SUMMARY' ? 'summary' : e.tagName === 'A' ? e.getAttribute('href') : e.classList.contains('row') ? 'row' : e.classList.contains('label') ? 'label' : e.tagName),
+                under: !e.closest('.hud') && e.tagName !== 'BODY' && b.top < hud.bottom - 1,
                 tip: tip.classList.contains('visible'),
             };
         }"""
-        forward = []
-        for _ in range(60):
-            keys.keyboard.press("Tab")
-            keys.wait_for_timeout(10)
-            step = keys.evaluate(describe)
-            if step["name"] == "BODY":
-                break
-            forward.append(step)
-        names = [s["name"] for s in forward]
+
+        def walk(key):
+            steps = []
+            for _ in range(60):
+                keys.keyboard.press(key)
+                keys.wait_for_timeout(10)
+                step = keys.evaluate(describe)
+                if step["name"] == "BODY":
+                    break
+                steps.append(step)
+            return steps
+
+        def load(view):
+            keys.goto(f"{url}#{view}", wait_until="networkidle")
+            keys.reload(wait_until="networkidle")
+            keys.wait_for_selector("#chart3 .segment", state="attached")
+
         chips = [f"continent-{c}" for c in ["all", "africa", "asia", "europe", "north-america", "oceania", "south-america"]]
-        want = chips + ["row"] * 20 + ["summary", "view-risers", "view-decliners"] + ["label"] * 5 + ["summary"] + ["row"] * 6 + ["summary"]
-        check("tab reaches every control in reading order", names == want, names)
-        check("focused rows and labels show a tooltip", all(s["tip"] for s in forward if s["name"] in ("row", "label")), [s["name"] for s in forward if s["name"] in ("row", "label") and not s["tip"]])
-        check("forward focus never lands under the sticky bar", not any(s["under"] for s in forward), [s["name"] for s in forward if s["under"]])
-        backward = []
-        for _ in range(60):
-            keys.keyboard.press("Shift+Tab")
-            keys.wait_for_timeout(10)
-            step = keys.evaluate(describe)
-            if step["name"] == "BODY":
-                break
-            backward.append(step)
-        check("backward focus never lands under the sticky bar", len(backward) >= len(want) - 1 and not any(s["under"] for s in backward), [s["name"] for s in backward if s["under"]])
-        tip_rows = [s for s in backward if s["name"] in ("row", "label")]
-        check("tooltips survive the scroll focus causes", all(s["tip"] for s in tip_rows), sum(not s["tip"] for s in tip_rows))
+        hud = ["hud-back", "#plate-1", "#plate-2", "#plate-3"] + chips
+        wants = {
+            "map": chips + ["#plate-1", "#plate-2", "#plate-3"],
+            "plate-1": hud + ["row"] * 20 + ["summary", "#plate-2"],
+            "plate-2": hud + ["view-risers", "view-decliners"] + ["label"] * 5 + ["summary", "#plate-1", "#plate-3"],
+            "plate-3": hud + ["row"] * 6 + ["summary", "#plate-2", "#map"],
+        }
+        for view, want in wants.items():
+            load(view)
+            forward = walk("Tab")
+            names = [s["name"] for s in forward]
+            check(f"tab reaches every control on {view} in reading order", names == want, names)
+            check(f"focused rows and labels on {view} show a tooltip", all(s["tip"] for s in forward if s["name"] in ("row", "label")), [s["name"] for s in forward if s["name"] in ("row", "label") and not s["tip"]])
+            check(f"forward focus on {view} never lands under the hud", not any(s["under"] for s in forward), [s["name"] for s in forward if s["under"]])
+            backward = walk("Shift+Tab")
+            check(f"backward focus on {view} never lands under the hud", len(backward) >= len(want) - 1 and not any(s["under"] for s in backward), [s["name"] for s in backward if s["under"]])
+            tip_rows = [s for s in backward if s["name"] in ("row", "label")]
+            check(f"tooltips on {view} survive the way back", all(s["tip"] for s in tip_rows), sum(not s["tip"] for s in tip_rows))
 
         # esc dismisses a focus tooltip and keeps focus
-        keys.evaluate("window.scrollTo(0, 0)")
-        for _ in range(8):
+        load("plate-1")
+        for _ in range(12):
             keys.keyboard.press("Tab")
         keys.wait_for_timeout(100)
         shown = keys.evaluate(describe)
@@ -330,20 +355,8 @@ def main():
         after = keys.evaluate(describe)
         check("esc dismisses a tooltip and keeps focus", shown["tip"] and not after["tip"] and after["name"] == "row", (shown, after))
 
-        # the tooltip stays with a focused row on scroll, and steps away when the row is off screen
-        keys.keyboard.press("Tab")
-        keys.wait_for_timeout(200)
-        beside = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return t.top < r.bottom + 40 && t.bottom > r.top - 40; }")
-        keys.evaluate("window.scrollBy(0, 60)")
-        keys.wait_for_timeout(200)
-        still = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return t.top < r.bottom + 40 && t.bottom > r.top - 40; }")
-        keys.evaluate("window.scrollBy(0, 1600)")
-        keys.wait_for_timeout(250)
-        gone = keys.evaluate(describe)
-        check("a focus tooltip stays with its row on scroll", beside and still and not gone["tip"], (beside, still, gone))
-
         # a mouse click on a country's name doesn't leave a tooltip or dimming behind
-        keys.evaluate("document.activeElement.blur(); window.scrollTo(0, 0)")
+        keys.evaluate("document.activeElement.blur()")
         keys.wait_for_timeout(100)
         keys.locator("#chart1 .row", has_text="Iceland").locator("text").nth(1).click()
         keys.mouse.move(5, 5)
@@ -351,27 +364,26 @@ def main():
         pinned = keys.evaluate("[document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('#chart1 svg').classList.contains('hovering')]")
         check("clicking a name doesn't pin a tooltip", pinned == [False, False], pinned)
 
-        # data tables open from the keyboard, and the tall one scrolls inside its own box
-        keys.evaluate("document.activeElement.blur(); window.scrollTo(0, 0)")
+        # data tables open from the keyboard, take the chart's row, and the tall one scrolls inside its own box
+        load("plate-2")
         keys.locator("#chart2 .data-table summary").focus()
         keys.keyboard.press("Enter")
         keys.wait_for_timeout(100)
-        opened = keys.evaluate("(() => { const d = document.querySelector('#chart2 .data-table'), s = d.querySelector('.table-scroll'); return [d.open, s.scrollHeight > s.clientHeight, s.tabIndex]; })()")
-        check("a data table opens with the keyboard and scrolls in its box", opened == [True, True, 0], opened)
+        opened = keys.evaluate("""(() => {
+            const d = document.querySelector('#chart2 .data-table'), s = d.querySelector('.table-scroll');
+            const row = document.querySelector('#chart2 .chart-row').getBoundingClientRect(), box = s.getBoundingClientRect();
+            const inRow = Math.abs(box.top - row.top) < 1 && Math.abs(box.bottom - row.bottom) < 1 && Math.abs(box.left - row.left) < 1 && Math.abs(box.right - row.right) < 1;
+            return [d.open, s.scrollHeight > s.clientHeight, s.tabIndex, inRow, getComputedStyle(document.querySelector('#chart2 .chart-wrap')).visibility, document.documentElement.scrollWidth <= innerWidth];
+        })()""")
+        check("a data table opens with the keyboard, takes the chart's row and scrolls in its box", opened == [True, True, 0, True, "hidden", True], opened)
         keys.keyboard.press("Enter")
+        keys.wait_for_timeout(100)
 
         # a mouse parked on a line must not leave stale marks when the keyboard takes over
-        park = """() => {
-            document.querySelector('#chart2 svg').scrollIntoView({ block: 'center' });
-            const b = document.querySelector('#chart2 svg').getBoundingClientRect();
-            const s = b.width / 1760;
-            return [b.x + (176 + 4 * 212 - 80) * s, b.y + (910 - %s * 62 - 200) * s];
-        }""" % next(s for s in lines["fallers"] if s["country"] == "Afghanistan")["scores"][4]
+        afghanistan = next(s for s in lines["fallers"] if s["country"] == "Afghanistan")["scores"][4]
+        park = lambda: to_screen(keys, "#chart2", 176 + 4 * 212, 910 - afghanistan * 62)
         marks = """() => [document.querySelector('.tooltip .tooltip-title').textContent, document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('#chart2 svg > line.axisline').getAttribute('visibility')]"""
-        at = keys.evaluate(park)
-        keys.wait_for_timeout(100)
-        at = keys.evaluate(park)
-        keys.mouse.move(at[0], at[1])
+        keys.mouse.move(*park())
         keys.wait_for_timeout(100)
         hovering = keys.evaluate(marks)
         keys.locator("#continent-africa").focus()
@@ -383,9 +395,7 @@ def main():
         keys.keyboard.press("Enter")
         keys.mouse.move(5, 5)
         keys.wait_for_timeout(450)
-        at = keys.evaluate(park)
-        keys.wait_for_timeout(100)
-        keys.mouse.move(at[0], at[1])
+        keys.mouse.move(*park())
         keys.wait_for_timeout(100)
         keys.locator("#view-decliners").focus()
         keys.keyboard.press("Tab")
@@ -394,11 +404,31 @@ def main():
         check("tabbing to a label clears a parked mouse's crosshair", tabbed[1] and tabbed[0] != "Afghanistan" and tabbed[2] == "hidden", tabbed)
         keys.close()
 
+        # on a window too short for the plate, the view scrolls: a focus tooltip stays with its row,
+        # and steps away once the row has scrolled out of the view behind the hud
+        short = browser.new_page(viewport={"width": 1440, "height": 420})
+        short.goto(f"{url}#plate-1", wait_until="networkidle")
+        short.wait_for_selector("#chart3 .segment", state="attached")
+        for _ in range(12):
+            short.keyboard.press("Tab")
+        short.wait_for_timeout(200)
+        near = "() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return t.top < r.bottom + 40 && t.bottom > r.top - 40; }"
+        visible = "document.querySelector('.tooltip').classList.contains('visible')"
+        beside = short.evaluate(near)
+        short.evaluate("document.querySelector('.views').scrollBy(0, 20)")
+        short.wait_for_timeout(200)
+        still = short.evaluate(near) and short.evaluate(visible)
+        short.evaluate("document.querySelector('.views').scrollBy(0, 400)")
+        short.wait_for_timeout(250)
+        away = short.evaluate(visible)
+        check("a focus tooltip stays with its row on scroll, and steps away behind the hud", beside and still and not away, (beside, still, away))
+        short.close()
+
         # a tooltip opened on a phone-width window stays fully inside the window
         small = browser.new_page(viewport={"width": 390, "height": 844})
-        small.goto(url, wait_until="networkidle")
-        small.wait_for_selector("#chart3 .segment")
-        for _ in range(11):
+        small.goto(f"{url}#plate-1", wait_until="networkidle")
+        small.wait_for_selector("#chart3 .segment", state="attached")
+        for _ in range(15):
             small.keyboard.press("Tab")
         small.wait_for_timeout(250)
         edge = small.evaluate("(() => { const t = document.querySelector('.tooltip').getBoundingClientRect(); return [t.left, t.right, innerWidth]; })()")
@@ -413,8 +443,8 @@ def main():
 
         # high contrast mode: chart text and marks use system colors, so they stay readable on black
         contrast = browser.new_context(forced_colors="active", color_scheme="dark").new_page()
-        contrast.goto(url, wait_until="networkidle")
-        contrast.wait_for_selector("#chart3 .segment")
+        contrast.goto(f"{url}#plate-1", wait_until="networkidle")
+        contrast.wait_for_selector("#chart3 .segment", state="attached")
         painted = contrast.evaluate("""() => {
             const name = getComputedStyle(document.querySelectorAll('#chart1 .row text')[1]).fill;
             const halo = getComputedStyle(document.querySelector('#chart1 .value')).stroke;
@@ -426,9 +456,9 @@ def main():
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace
         calm = browser.new_context(reduced_motion="reduce").new_page()
-        calm.goto(url, wait_until="networkidle")
-        calm.wait_for_selector("#chart3 .segment")
-        reduced = calm.evaluate("""() => ['#chart1 .bar', '#chart3 .segment', '.tooltip', '.filter-bar', '.empty', '.segmented button'].map(s => {
+        calm.goto(f"{url}#plate-1", wait_until="networkidle")
+        calm.wait_for_selector("#chart3 .segment", state="attached")
+        reduced = calm.evaluate("""() => ['#chart1 .bar', '#chart3 .segment', '.tooltip', '.empty', '.segmented button', '#continent-all'].map(s => {
             const c = getComputedStyle(document.querySelector(s));
             return [s, c.transitionDuration, c.transitionDelay];
         })""")

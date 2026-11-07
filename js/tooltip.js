@@ -43,11 +43,13 @@ function focusTooltipOpen() {
 }
 
 // beside the anchor, using only the part of it that's visible inside its chart.
-// the tooltip stays with its mark while the page scrolls, and steps away while the mark is off screen
+// the tooltip stays with its mark while the view scrolls, and steps away while the mark is
+// scrolled out of the view (behind the hud at the top, or past the window at the bottom)
 function placeAtAnchor() {
   const box = tooltipAnchor.getBoundingClientRect();
   const chart = tooltipAnchor.closest(".chart").getBoundingClientRect();
-  tooltip.classed("visible", box.bottom > 0 && box.top < window.innerHeight);
+  const view = tooltipAnchor.closest(".views").getBoundingClientRect();
+  tooltip.classed("visible", box.bottom > Math.max(0, view.top) && box.top < Math.min(window.innerHeight, view.bottom));
   placeTooltip(Math.min(box.right, chart.right), box.top + box.height / 2);
 }
 

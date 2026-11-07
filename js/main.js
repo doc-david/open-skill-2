@@ -28,10 +28,15 @@ function fingerprint(data) {
 
 Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) => {
   if (fingerprint(data) !== verified) {
-    d3.select(".panels").html("").append("p").attr("class", "error")
+    d3.select(".hud").remove();
+    d3.select(".views").html("").append("p").attr("class", "error")
       .text("This chart data doesn’t match Open Skill 1’s verified numbers, so the charts aren’t drawn.");
     return;
   }
+
+  // the map's kicker counts chart 2's countries, so the typed copy holds no number
+  const lines = data.chart2_lines;
+  d3.select("#country-count").text(lines.context_series.length + lines.risers.length + lines.fallers.length);
 
   const charts = {
     chart1: chart1(data, continents),
@@ -63,22 +68,14 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
   });
 
   // esc always dismisses a tooltip and its emphasis. focus stays where it is
-  document.addEventListener("keydown", event => {
-    if (event.key !== "Escape") return;
+  function clearMarks() {
     hideTooltip();
     Object.values(charts).forEach(chart => chart.clear());
+  }
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") clearMarks();
   });
 
-  // the filter bar sits flat on the page, and turns into a floating layer once it sticks
-  const bar = document.querySelector(".filter-bar");
-  const stuckAt = parseFloat(getComputedStyle(bar).top);
-  let queued = false;
-  function updateBar() {
-    queued = false;
-    bar.classList.toggle("is-stuck", window.scrollY > 0 && bar.getBoundingClientRect().top <= stuckAt + 0.5);
-  }
-  window.addEventListener("scroll", () => {
-    if (!queued) { queued = true; requestAnimationFrame(updateBar); }
-  }, { passive: true });
-  updateBar();
+  // leaving a plate takes its tooltip and emphasis with it
+  window.addEventListener("hashchange", clearMarks);
 });

@@ -13,49 +13,157 @@
   <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <div class="page">
-    <header class="masthead">
-      <p class="eyebrow">INFO 4602 · Open Skill 2 · World Happiness surveys 2019–2025</p>
-      <h1>World Happiness, rebuilt in D3</h1>
-      <p class="lede">The three dashboards from Open Skill 1, first prototyped in Figma, now coded in D3.js with the interactions Figma couldn’t do: tooltips that follow your cursor, every country’s line to explore, one continent filter that links all three charts, and an animated switch between the biggest risers and decliners.</p>
-    </header>
+  <div class="app">
+    <div class="hud">
+      <nav class="hud-plates" id="hud-plates" aria-label="Plates" hidden>
+        <a class="button" id="hud-back" href="#map"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Back to the map</a>
+        <span class="hud-count" id="hud-count"></span>
+        <span class="hud-dots">
+          <a href="#plate-1" aria-label="Plate 1"><span aria-hidden="true">1</span></a>
+          <a href="#plate-2" aria-label="Plate 2"><span aria-hidden="true">2</span></a>
+          <a href="#plate-3" aria-label="Plate 3"><span aria-hidden="true">3</span></a>
+        </span>
+      </nav>
+      <nav class="filter-bar" aria-label="Filter all charts by continent">
+        <span class="filter-label" id="continent-label">Continent</span>
+        <div class="chips" id="continent" role="group" aria-labelledby="continent-label">
+          <button type="button" id="continent-all" data-continent="All" aria-pressed="true">All</button>
+          <button type="button" id="continent-africa" data-continent="Africa" aria-pressed="false">Africa</button>
+          <button type="button" id="continent-asia" data-continent="Asia" aria-pressed="false">Asia</button>
+          <button type="button" id="continent-europe" data-continent="Europe" aria-pressed="false">Europe</button>
+          <button type="button" id="continent-north-america" data-continent="North America" aria-pressed="false">North America</button>
+          <button type="button" id="continent-oceania" data-continent="Oceania" aria-pressed="false">Oceania</button>
+          <button type="button" id="continent-south-america" data-continent="South America" aria-pressed="false">South America</button>
+        </div>
+      </nav>
+    </div>
 
-    <nav class="filter-bar" aria-label="Filter all charts by continent">
-      <span class="filter-label" id="continent-label">Continent</span>
-      <div class="chips" id="continent" role="group" aria-labelledby="continent-label">
-        <button type="button" id="continent-all" data-continent="All" aria-pressed="true">All</button>
-        <button type="button" id="continent-africa" data-continent="Africa" aria-pressed="false">Africa</button>
-        <button type="button" id="continent-asia" data-continent="Asia" aria-pressed="false">Asia</button>
-        <button type="button" id="continent-europe" data-continent="Europe" aria-pressed="false">Europe</button>
-        <button type="button" id="continent-north-america" data-continent="North America" aria-pressed="false">North America</button>
-        <button type="button" id="continent-oceania" data-continent="Oceania" aria-pressed="false">Oceania</button>
-        <button type="button" id="continent-south-america" data-continent="South America" aria-pressed="false">South America</button>
+    <main class="views">
+      <div class="view view-map" id="view-map">
+        <div class="map-ground">
+          <div class="map-inner">
+            <header class="masthead">
+              <p class="eyebrow">INFO 4602 · Open Skill 2 · World Happiness surveys 2019–2025</p>
+              <p class="kicker">A field guide to <span id="country-count"></span> countries</p>
+              <h1 tabindex="-1">World Happiness, rebuilt in D3</h1>
+              <p class="lede">The three dashboards from Open Skill 1, first prototyped in Figma, now coded in D3.js with the interactions Figma couldn’t do: tooltips that follow your cursor, every country’s line to explore, one continent filter that links all three charts, and an animated switch between the biggest risers and decliners.</p>
+            </header>
+
+            <nav class="trail" aria-label="Plates">
+              <a class="stop" href="#plate-1" data-plate="1">
+                <span class="stop-text">
+                  <span class="stop-plate">Plate 1</span>
+                  <span class="stop-title">Happiest and Unhappiest Countries of 2025</span>
+                  <span class="stop-dek">Top and bottom 10 ranked countries</span>
+                </span>
+              </a>
+              <a class="stop" href="#plate-2" data-plate="2">
+                <span class="stop-text">
+                  <span class="stop-plate">Plate 2</span>
+                  <span class="stop-title">Score Change from 2019 to 2025</span>
+                  <span class="stop-dek">Top 5 risers and decliners</span>
+                </span>
+              </a>
+              <a class="stop" href="#plate-3" data-plate="3">
+                <span class="stop-text">
+                  <span class="stop-plate">Plate 3</span>
+                  <span class="stop-title">Factors of Happiness in 2025</span>
+                  <span class="stop-dek">Top-ranked country of each continent</span>
+                </span>
+              </a>
+            </nav>
+          </div>
+        </div>
+
+        <div class="below-fold">
+          <section class="panel compare" id="compare" aria-labelledby="compare-title">
+            <header class="panel-head">
+              <div>
+                <h2 id="compare-title">What Figma Couldn’t Do</h2>
+                <p class="dek">Each Open Skill 1 frame beside its D3 chart, drawn from the same data at the same coordinates.</p>
+              </div>
+            </header>
+
+            <article class="pair" aria-labelledby="pair1-title">
+              <h3 id="pair1-title">Happiest and Unhappiest Countries of 2025</h3>
+              <div class="pair-grid">
+                <figure>
+                  <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart1-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 1: navy bars for the top and bottom ten countries, with no pointer feedback."></div>
+                  <figcaption><strong>Figma.</strong> A tooltip was a fixed box baked into a hover variant, so it couldn’t follow the cursor. The hover tint also vanished on the navy bars.</figcaption>
+                </figure>
+                <figure>
+                  <div class="shot" style="--h: 760"><img src="assets/d3/chart1-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 1 with Denmark’s bar hovered: its bar stays solid, the others step back, and a tooltip sits at the cursor."></div>
+                  <figcaption><strong>D3.</strong> One tooltip follows the cursor and flips at the window’s edge. The hovered bar stays solid while the others step back.</figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article class="pair" aria-labelledby="pair2-title">
+              <h3 id="pair2-title">Score Change from 2019 to 2025</h3>
+              <div class="pair-grid">
+                <figure>
+                  <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart2-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 2: five navy lines labeled at their ends over a crowd of grey lines, with the toggle above."></div>
+                  <figcaption><strong>Figma.</strong> The toggle was two variants swapped, and tooltips collided at the ends of the lines.</figcaption>
+                </figure>
+                <figure>
+                  <div class="shot" style="--h: 760"><img src="assets/d3/chart2-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 2 with Afghanistan’s grey line hovered: the line darkens, a crosshair and marker sit on it, and a tooltip names it."></div>
+                  <figcaption><strong>D3.</strong> The toggle animates the lines themselves. Point near any country’s line and it lights up and names itself.</figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article class="pair" aria-labelledby="pair3-title">
+              <h3 id="pair3-title">Factors of Happiness in 2025</h3>
+              <div class="pair-grid">
+                <figure>
+                  <div class="shot shot-figma" style="--y: 280; --h: 680"><img src="assets/figma/chart3-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 3: stacked factor bars for the top-ranked country of each continent."></div>
+                  <figcaption><strong>Figma.</strong> Each frame stood alone, with its data pasted in by a script, so nothing could link the three charts.</figcaption>
+                </figure>
+                <figure>
+                  <div class="shot" style="--h: 680"><img src="assets/d3/chart3-d3.png" width="1760" height="680" loading="lazy" alt="The D3 chart 3 with Europe selected in the continent filter: Finland’s row stays solid and the others fade."></div>
+                  <figcaption><strong>D3.</strong> All three charts draw from one data file, so one continent filter changes them together. Here, Europe is selected.</figcaption>
+                </figure>
+              </div>
+            </article>
+          </section>
+
+          <footer class="colophon">
+            <p><strong>Data.</strong> The course's World Happiness CSV (World Happiness Report, Gallup World Poll), turned into chart data by Open Skill 1’s <code>prep_data.py</code>. The regenerated file matches Open Skill 1’s verified copy byte for byte (SHA-256 <code>22c8681b…</code>), and the page checks the numbers again before drawing.</p>
+            <p><strong>Design.</strong> Colors, type and spacing come from the Open Skill 1 Figma file’s variables, exported as CSS tokens.</p>
+            <p><strong>Code.</strong> D3.js v7. Written with Claude (Anthropic) and directed by David Doctor, who chose every chart and interaction.</p>
+          </footer>
+        </div>
       </div>
-    </nav>
 
-    <main class="panels">
-      <section class="panel" id="chart1" aria-labelledby="chart1-title">
+      <section class="view plate panel" id="chart1" aria-labelledby="chart1-title" hidden>
         <header class="panel-head">
           <div>
-            <h2 id="chart1-title">Happiest and Unhappiest Countries of 2025</h2>
+            <h2 id="chart1-title" tabindex="-1">Happiest and Unhappiest Countries of 2025</h2>
             <p class="dek">Top and bottom 10 ranked countries</p>
           </div>
         </header>
-        <div class="chart-wrap">
-          <div class="chart"><svg aria-labelledby="chart1-title" role="group"></svg></div>
-          <p class="empty" role="status"></p>
+        <div class="chart-row">
+          <div class="chart-wrap">
+            <div class="chart"><svg aria-labelledby="chart1-title" role="group"></svg></div>
+            <p class="empty" role="status"></p>
+          </div>
+          <details class="data-table">
+            <summary>Data table</summary>
+            <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart1-title"><table aria-labelledby="chart1-title"></table></div>
+          </details>
         </div>
-        <details class="data-table">
-          <summary>Data table</summary>
-          <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart1-title"><table aria-labelledby="chart1-title"></table></div>
-        </details>
-        <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span><span>1 / 3</span></footer>
+        <footer class="panel-foot">
+          <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
+          <nav class="plate-nav" aria-label="Plates, previous and next">
+            <a class="button" href="#plate-2">Plate 2<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+          </nav>
+        </footer>
       </section>
 
-      <section class="panel" id="chart2" aria-labelledby="chart2-title">
+      <section class="view plate panel" id="chart2" aria-labelledby="chart2-title" hidden>
         <header class="panel-head">
           <div>
-            <h2 id="chart2-title">Score Change from 2019 to 2025</h2>
+            <h2 id="chart2-title" tabindex="-1">Score Change from 2019 to 2025</h2>
             <p class="dek">Top 5 risers and decliners</p>
             <p class="note">Grey lines are the other <span id="chart2-others"></span> countries surveyed in all seven years. Hover any line to see it.</p>
           </div>
@@ -65,93 +173,52 @@
             <button type="button" id="view-decliners" data-view="decliners" data-label="Biggest decliners" aria-pressed="false">Biggest decliners</button>
           </div>
         </header>
-        <div class="chart-wrap">
-          <div class="chart"><svg aria-labelledby="chart2-title" role="group"></svg></div>
-          <p class="empty" role="status"></p>
+        <div class="chart-row">
+          <div class="chart-wrap">
+            <div class="chart"><svg aria-labelledby="chart2-title" role="group"></svg></div>
+            <p class="empty" role="status"></p>
+          </div>
+          <details class="data-table">
+            <summary>Data table</summary>
+            <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart2-title"><table aria-labelledby="chart2-title"></table></div>
+          </details>
         </div>
-        <details class="data-table">
-          <summary>Data table</summary>
-          <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart2-title"><table aria-labelledby="chart2-title"></table></div>
-        </details>
-        <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · surveys 2019–2025</span><span>2 / 3</span></footer>
+        <footer class="panel-foot">
+          <span>Source: World Happiness Report (Gallup World Poll) · surveys 2019–2025</span>
+          <nav class="plate-nav" aria-label="Plates, previous and next">
+            <a class="button" href="#plate-1"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Plate 1</a>
+            <a class="button" href="#plate-3">Plate 3<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+          </nav>
+        </footer>
       </section>
 
-      <section class="panel" id="chart3" aria-labelledby="chart3-title">
+      <section class="view plate panel" id="chart3" aria-labelledby="chart3-title" hidden>
         <header class="panel-head">
           <div>
-            <h2 id="chart3-title">Factors of Happiness in 2025</h2>
+            <h2 id="chart3-title" tabindex="-1">Factors of Happiness in 2025</h2>
             <p class="dek">Top-ranked country of each continent</p>
           </div>
+          <ul class="legend" aria-label="Legend"></ul>
         </header>
-        <ul class="legend" aria-label="Legend"></ul>
-        <div class="chart-wrap">
-          <div class="chart"><svg aria-labelledby="chart3-title" role="group"></svg></div>
-          <p class="empty" role="status"></p>
+        <div class="chart-row">
+          <div class="chart-wrap">
+            <div class="chart"><svg aria-labelledby="chart3-title" role="group"></svg></div>
+            <p class="empty" role="status"></p>
+          </div>
+          <details class="data-table">
+            <summary>Data table</summary>
+            <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart3-title"><table aria-labelledby="chart3-title"></table></div>
+          </details>
         </div>
-        <details class="data-table">
-          <summary>Data table</summary>
-          <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chart3-title"><table aria-labelledby="chart3-title"></table></div>
-        </details>
-        <footer class="panel-foot"><span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span><span>3 / 3</span></footer>
-      </section>
-
-      <section class="panel compare" id="compare" aria-labelledby="compare-title">
-        <header class="panel-head">
-          <div>
-            <h2 id="compare-title">What Figma Couldn’t Do</h2>
-            <p class="dek">Each Open Skill 1 frame beside its D3 chart, drawn from the same data at the same coordinates.</p>
-          </div>
-        </header>
-
-        <article class="pair" aria-labelledby="pair1-title">
-          <h3 id="pair1-title">Happiest and Unhappiest Countries of 2025</h3>
-          <div class="pair-grid">
-            <figure>
-              <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart1-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 1: navy bars for the top and bottom ten countries, with no pointer feedback."></div>
-              <figcaption><strong>Figma.</strong> A tooltip was a fixed box baked into a hover variant, so it couldn’t follow the cursor. The hover tint also vanished on the navy bars.</figcaption>
-            </figure>
-            <figure>
-              <div class="shot" style="--h: 760"><img src="assets/d3/chart1-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 1 with Denmark’s bar hovered: its bar stays solid, the others step back, and a tooltip sits at the cursor."></div>
-              <figcaption><strong>D3.</strong> One tooltip follows the cursor and flips at the window’s edge. The hovered bar stays solid while the others step back.</figcaption>
-            </figure>
-          </div>
-        </article>
-
-        <article class="pair" aria-labelledby="pair2-title">
-          <h3 id="pair2-title">Score Change from 2019 to 2025</h3>
-          <div class="pair-grid">
-            <figure>
-              <div class="shot shot-figma" style="--y: 200; --h: 760"><img src="assets/figma/chart2-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 2: five navy lines labeled at their ends over a crowd of grey lines, with the toggle above."></div>
-              <figcaption><strong>Figma.</strong> The toggle was two variants swapped, and tooltips collided at the ends of the lines.</figcaption>
-            </figure>
-            <figure>
-              <div class="shot" style="--h: 760"><img src="assets/d3/chart2-d3.png" width="1760" height="760" loading="lazy" alt="The D3 chart 2 with Afghanistan’s grey line hovered: the line darkens, a crosshair and marker sit on it, and a tooltip names it."></div>
-              <figcaption><strong>D3.</strong> The toggle animates the lines themselves. Point near any country’s line and it lights up and names itself.</figcaption>
-            </figure>
-          </div>
-        </article>
-
-        <article class="pair" aria-labelledby="pair3-title">
-          <h3 id="pair3-title">Factors of Happiness in 2025</h3>
-          <div class="pair-grid">
-            <figure>
-              <div class="shot shot-figma" style="--y: 280; --h: 680"><img src="assets/figma/chart3-figma.png" width="1920" height="1080" loading="lazy" alt="The Figma frame of chart 3: stacked factor bars for the top-ranked country of each continent."></div>
-              <figcaption><strong>Figma.</strong> Each frame stood alone, with its data pasted in by a script, so nothing could link the three charts.</figcaption>
-            </figure>
-            <figure>
-              <div class="shot" style="--h: 680"><img src="assets/d3/chart3-d3.png" width="1760" height="680" loading="lazy" alt="The D3 chart 3 with Europe selected in the continent filter: Finland’s row stays solid and the others fade."></div>
-              <figcaption><strong>D3.</strong> All three charts draw from one data file, so one continent filter changes them together. Here, Europe is selected.</figcaption>
-            </figure>
-          </div>
-        </article>
+        <footer class="panel-foot">
+          <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
+          <nav class="plate-nav" aria-label="Plates, previous and next">
+            <a class="button" href="#plate-2"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Plate 2</a>
+            <a class="button" href="#map">Back to the map<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+          </nav>
+        </footer>
       </section>
     </main>
-
-    <footer class="colophon">
-      <p><strong>Data.</strong> The course's World Happiness CSV (World Happiness Report, Gallup World Poll), turned into chart data by Open Skill 1’s <code>prep_data.py</code>. The regenerated file matches Open Skill 1’s verified copy byte for byte (SHA-256 <code>22c8681b…</code>), and the page checks the numbers again before drawing.</p>
-      <p><strong>Design.</strong> Colors, type and spacing come from the Open Skill 1 Figma file’s variables, exported as CSS tokens.</p>
-      <p><strong>Code.</strong> D3.js v7. Written with Claude (Anthropic) and directed by David Doctor, who chose every chart and interaction.</p>
-    </footer>
   </div>
 
   <script src="js/vendor/d3.v7.9.0.min.js"></script>
@@ -162,6 +229,7 @@
   <script src="js/chart1.js"></script>
   <script src="js/chart2.js"></script>
   <script src="js/chart3.js"></script>
+  <script src="js/views.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
