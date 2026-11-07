@@ -84,6 +84,21 @@ function animateView(from, to) {
   }
 }
 
+// only the view scrolls, and it can't take focus itself, so the scroll keys do nothing until focus
+// is inside it. this passes them along from the hud and the bare page. arrows and space stay with
+// a focused chip or link, where they already mean something
+function passScrollKeys(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest(".views")) return;
+  const bare = event.target === document.body;
+  const jump = views.clientHeight * 0.9;
+  const moves = { PageDown: jump, PageUp: -jump, Home: -views.scrollTop, End: views.scrollHeight };
+  if (bare) Object.assign(moves, { ArrowDown: 40, ArrowUp: -40, " ": event.shiftKey ? -jump : jump });
+  if (!(event.key in moves)) return;
+  event.preventDefault();
+  views.scrollBy(0, moves[event.key]);
+}
+document.addEventListener("keydown", passScrollKeys);
+
 drawContours();
 let route = routeOf(location.hash);
 showView(route);

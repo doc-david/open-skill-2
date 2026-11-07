@@ -1,4 +1,4 @@
-// the figma tokens live in css/tokens.css. d3 needs real color values to animate from one
+// the design tokens live in css/tokens.css. d3 needs real color values to animate from one
 // color to another, so we read the css variables once here instead of retyping hex codes.
 const css = getComputedStyle(document.documentElement);
 const token = name => css.getPropertyValue(`--${name}`).trim();

@@ -9,7 +9,7 @@ function chart3(data, continents) {
   const x = d3.scaleLinear().domain([0, 10]).range([328, 1608]);
   const ticks = [0, 2, 4, 6, 8, 10];
 
-  // legend label, tooltip title and figma color for each factor, in the stack's left-to-right order
+  // legend label, tooltip title and pigment for each factor, in the stack's left-to-right order
   const factors = {
     "GDP per Capita": { label: "GDP per capita", title: "Explained by GDP per capita", color: token("color-factor-gdp") },
     "Social Support": { label: "Social support", title: "Explained by social support", color: token("color-factor-social") },
@@ -77,7 +77,7 @@ function chart3(data, continents) {
     .attr("dominant-baseline", "central")
     .text(d => d.continent);
 
-  // a nested data join: each row's data is its 7 segments. the white stroke draws the 2px gaps
+  // a nested data join: each row's data is its 7 segments. the plate-colored stroke draws the 2px gaps
   const segments = row.selectAll(".segment").data(d => d.segments).join("path")
     .attr("class", "segment")
     .attr("fill", s => factors[s.name].color)

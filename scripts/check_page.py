@@ -291,6 +291,38 @@ def run_checks(args, url, errors):
         roles = page.eval_on_selector_all("#chart1 .row, #chart2 .label, #chart3 .row", "e => e.filter(x => x.getAttribute('role') !== 'img' || !x.getAttribute('aria-label')).length")
         check("rows and labels have a role and a name", roles == 0, roles)
 
+        # the scroll keys reach the view from the bare page and from the hud, and arrows stay with a chip
+        scroller = browser.new_page(viewport={"width": 1280, "height": 720})
+        scroller.goto(url, wait_until="networkidle")
+        scroller.wait_for_selector("#chart3 .segment", state="attached")
+        at = "document.querySelector('.views').scrollTop"
+        scroller.keyboard.press("PageDown")
+        from_page = scroller.evaluate(at)
+        scroller.keyboard.press("Home")
+        home = scroller.evaluate(at)
+        scroller.keyboard.press("ArrowDown")
+        arrow = scroller.evaluate(at)
+        scroller.keyboard.press("Home")
+        scroller.locator("#continent-asia").focus()
+        scroller.keyboard.press("PageDown")
+        from_chip = scroller.evaluate(at)
+        scroller.keyboard.press("Home")
+        scroller.keyboard.press("ArrowDown")
+        arrow_chip = scroller.evaluate(at)
+        scroller.keyboard.press("End")
+        end = scroller.evaluate("(() => { const v = document.querySelector('.views'); return Math.abs(v.scrollTop + v.clientHeight - v.scrollHeight) < 2; })()")
+        check("the scroll keys reach the view from the page and the hud", from_page > 400 and home == 0 and arrow > 0 and from_chip > 400 and arrow_chip == 0 and end, (from_page, home, arrow, from_chip, arrow_chip, end))
+        scroller.close()
+
+        # the data table's button never covers the source line, even with text spacing turned up
+        spacing = browser.new_page(viewport={"width": 1280, "height": 720})
+        spacing.goto(f"{url}#plate-1", wait_until="networkidle")
+        spacing.wait_for_selector("#chart3 .segment", state="attached")
+        spacing.add_style_tag(content="* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }")
+        clear = spacing.evaluate("document.querySelector('#chart1 summary').getBoundingClientRect().right <= document.querySelector('#chart1 .panel-foot span').getBoundingClientRect().left")
+        check("the data table button clears the source line at wide text spacing", clear, clear)
+        spacing.close()
+
         # the hud stays put while a view scrolls under it, and the page itself never scrolls
         open_view(page, "map")
         page.evaluate("document.querySelector('.views').scrollTop = 900")

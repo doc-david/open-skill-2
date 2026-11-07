@@ -60,9 +60,11 @@ def main():
         page.screenshot(path=str(out / "chart1-d3.png"), clip=box)
         page.mouse.move(2, 2)
 
-        # chart 2: a grey line figma couldn't name. the chart sits at the window's bottom edge,
+        # chart 2: a grey line figma couldn't name. the window ends at the chart's bottom edge,
         # so the tooltip flips up instead of being cut off by the crop
         open_plate(page, 2)
+        box = clip_of(page, "#chart2")
+        page.set_viewport_size({"width": 1100, "height": round(box["height"]) + 40})
         box = clip_of(page, "#chart2", block="end")
         scale = box["width"] / 1760
         grey = next(s for s in data["chart2_lines"]["fallers"] if s["country"] == "Afghanistan")
@@ -70,7 +72,10 @@ def main():
         py = box["y"] + (910 - grey["scores"][4] * 62 - 200) * scale
         page.mouse.move(px, py)
         page.wait_for_timeout(300)
+        tip = page.locator(".tooltip").bounding_box()
+        assert box["y"] <= tip["y"] and tip["y"] + tip["height"] <= box["y"] + box["height"], f"tooltip leaves the crop: {tip} {box}"
         page.screenshot(path=str(out / "chart2-d3.png"), clip=box)
+        page.set_viewport_size({"width": 1100, "height": 1000})
         page.mouse.move(2, 2)
 
         # chart 3: the continent filter that links all three charts

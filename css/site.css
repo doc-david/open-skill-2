@@ -504,7 +504,7 @@ h2 {
   justify-content: space-between;
   gap: 8px 16px;
   min-height: 44px;
-  padding-left: 124px;
+  padding-left: 140px;
   font-size: 13px;
   color: var(--color-text-secondary);
 }
@@ -577,7 +577,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   font-weight: 600;
 }
 
-/* svg text uses the figma text styles at figma's own size; the viewbox scales them with the chart */
+/* svg text keeps figma's sizes in the field guide's ui font; the viewbox scales them with the chart */
 .chart text { font-family: var(--font-ui); font-variant-numeric: tabular-nums; }
 .t-footnote { font-size: var(--font-size-footnote); }
 .t-caption { font-size: var(--font-size-caption-1); }
