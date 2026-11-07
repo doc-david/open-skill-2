@@ -93,6 +93,7 @@ if (route === 0) document.querySelectorAll(".stop").forEach(stop => stop.classLi
 // a new view is a new page to a keyboard or a screen reader, so focus moves to its heading
 window.addEventListener("hashchange", () => {
   const next = routeOf(location.hash);
+  if (!viewOf(next)) return; // the page refused its data, so there are no views left to show
   if (next !== route) animateView(route, next);
   route = next;
   showView(route);

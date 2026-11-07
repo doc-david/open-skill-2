@@ -595,7 +595,10 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .hovering .bar:not(.active), .hovering .value:not(.active) { opacity: 0.35; }
 .hovering .segment:not(.active) { opacity: 0.3; }
 .row:focus { outline: none; }
-.row:focus-visible .bar, .row:focus-visible .segment { stroke: var(--color-text-primary); stroke-width: 3px; }
+/* bars are forest, so a forest ring wouldn't show. the underline holds up without any color */
+.row:focus-visible .bar { stroke: var(--color-highlighter); stroke-width: 4px; }
+.row:focus-visible .segment { stroke: var(--color-text-primary); stroke-width: 3px; }
+.row:focus-visible text:nth-of-type(2) { text-decoration: underline; text-decoration-thickness: 2px; }
 .label:focus { outline: none; }
 .label:focus-visible text { text-decoration: underline; text-decoration-thickness: 2px; }
 

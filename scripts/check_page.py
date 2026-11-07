@@ -473,6 +473,11 @@ def run_checks(args, url, errors):
         keys.wait_for_timeout(250)
         after = keys.evaluate(describe)
         check("esc dismisses a tooltip and keeps focus", shown["tip"] and not after["tip"] and after["name"] == "row", (shown, after))
+        ring = keys.evaluate("""() => {
+            const row = document.activeElement, bar = getComputedStyle(row.querySelector('.bar')), name = getComputedStyle(row.querySelectorAll('text')[1]);
+            return [bar.stroke !== bar.fill && bar.stroke !== 'none', name.textDecorationLine];
+        }""")
+        check("a focused bar's ring shows against the bar, and its name is underlined", ring == [True, "underline"], ring)
 
         # a mouse click on a country's name doesn't leave a tooltip or dimming behind
         keys.evaluate("document.activeElement.blur()")
@@ -653,6 +658,25 @@ def run_checks(args, url, errors):
         seen_.append(still.evaluate(probe))
         check("reduced motion adds no animations or transforms", all(a == [] and t == "none" and all(x == "none" for x in st) for a, t, st in seen_), seen_)
         still.close()
+
+        # change one score in the data: the page refuses to draw, says so, and stays quiet afterwards
+        tampered = browser.new_page(viewport={"width": 1280, "height": 720})
+        problems = []
+        tampered.on("pageerror", lambda e: problems.append(str(e)))
+
+        def tamper(route):
+            changed = json.loads(json.dumps(data))
+            changed["chart1_ranked_bar"]["top10"][0]["score"] += 0.01
+            route.fulfill(json=changed)
+
+        tampered.route("**/data/chart-data.json", tamper)
+        tampered.goto(url, wait_until="networkidle")
+        tampered.wait_for_timeout(300)
+        refused = tampered.evaluate("[(document.querySelector('.error') || {}).textContent || '', document.querySelectorAll('.row').length, !!document.querySelector('.hud')]")
+        tampered.evaluate("location.hash = '#plate-2'")
+        tampered.wait_for_timeout(100)
+        check("changed data is refused, with a message and no errors after", "doesn’t match" in refused[0] and refused[1:] == [0, False] and not problems, (refused, problems))
+        tampered.close()
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace
         calm = browser.new_context(reduced_motion="reduce").new_page()
