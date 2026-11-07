@@ -3,6 +3,17 @@
 const css = getComputedStyle(document.documentElement);
 const token = name => css.getPropertyValue(`--${name}`).trim();
 
+// windows high contrast mode replaces the page's colors, so a mark's accent has to be a system
+// color too. d3 needs a real value to animate, so a throwaway element reports what it resolves to
+const forcedColors = window.matchMedia("(forced-colors: active)").matches;
+function systemColor(name) {
+  const probe = document.body.appendChild(document.createElement("span"));
+  probe.style.color = name;
+  const value = getComputedStyle(probe).color;
+  probe.remove();
+  return value;
+}
+
 const colors = {
   ink: token("color-text-primary"),
   muted: token("color-text-secondary"),
@@ -10,7 +21,7 @@ const colors = {
   grid: token("color-line-grid"),
   axis: token("color-line-axis"),
   context: token("color-data-context"),
-  focus: token("color-data-focus")
+  focus: forcedColors ? systemColor("Highlight") : token("color-data-focus")
 };
 
 // one motion setting for every chart change: d3's quartic ease-in-out is the same curve as the

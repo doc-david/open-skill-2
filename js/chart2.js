@@ -110,6 +110,8 @@ function chart2(data, continents) {
     // keyboard: tab to a label to light up its line, with the same tooltip as hovering
     label.on("focus", function (event, d) {
       if (focusedByMouse(this)) return;
+      crosshair.attr("visibility", "hidden");
+      marker.attr("visibility", "hidden");
       paintHover(d.s);
       showTooltipAt(this, d.s.country, tip(d.s, 2025));
     }).on("blur", () => {
@@ -211,7 +213,7 @@ function chart2(data, continents) {
 
     paths.filter(highlighted).raise();
     if (state.hover) paths.filter(s => s === state.hover).raise();
-    tableRows.classed("highlighted", highlighted);
+    tableRows.classed("highlighted", highlighted).attr("aria-current", s => highlighted(s) ? "true" : null);
 
     (animate ? dots.transition(t) : dots)
       .attr("r", d => highlighted(d.s) ? 5 : 3)
@@ -234,7 +236,9 @@ function chart2(data, continents) {
       const named = group.selectAll(".label, line");
       (animate ? named.transition(t) : named).attr("opacity", d => included(d.s) ? 1 : faded * 2);
       // only labels you can read are tab stops, the same rule as the rows on charts 1 and 3
-      group.selectAll(".label").attr("tabindex", d => on && included(d.s) ? 0 : -1);
+      group.selectAll(".label")
+        .attr("tabindex", d => on && included(d.s) ? 0 : -1)
+        .attr("aria-hidden", d => included(d.s) ? null : "true");
     }
   }
 
@@ -251,6 +255,7 @@ function chart2(data, continents) {
     },
     filter(continent) {
       state.continent = continent;
+      if (state.hover && !included(state.hover)) leave();
       paint(true);
       tableRows.attr("hidden", s => included(s) ? null : "");
       return series.filter(included).length;

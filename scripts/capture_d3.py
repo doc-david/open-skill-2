@@ -27,7 +27,9 @@ CSS = """
 
 def clip_of(page, chart, block="center"):
     page.evaluate(f"document.querySelector('{chart} svg').scrollIntoView({{ block: '{block}' }})")
-    return page.locator(f"{chart} svg").bounding_box()
+    box = page.locator(f"{chart} svg").bounding_box()
+    # whole pixels, so the still comes out at exactly the viewbox's size
+    return {"x": round(box["x"]), "y": round(box["y"]), "width": box["width"], "height": box["height"]}
 
 
 def main():

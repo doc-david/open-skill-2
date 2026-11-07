@@ -124,7 +124,7 @@ function chart3(data, continents) {
       const included = d => continent === "All" || d.continent === continent;
       row.transition().duration(motion.duration).ease(motion.ease)
         .attr("opacity", d => included(d) ? 1 : faded);
-      row.attr("tabindex", d => included(d) ? 0 : -1);
+      row.attr("tabindex", d => included(d) ? 0 : -1).attr("aria-hidden", d => included(d) ? null : "true");
       tableRows.attr("hidden", d => included(d) ? null : "");
       return rows.filter(included).length;
     },

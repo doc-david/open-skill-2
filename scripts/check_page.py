@@ -9,6 +9,7 @@ import argparse
 import functools
 import http.server
 import json
+import sys
 import threading
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
@@ -52,6 +53,7 @@ def serve():
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("--shots", default=None)
     args = parser.parse_args()
@@ -62,10 +64,13 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
-        page.on("console", lambda m: errors.append(m.text) if m.type == "error" and "ERR_TUNNEL_CONNECTION_FAILED" not in m.text else None)
+        fonts = ("fonts.googleapis.com", "fonts.gstatic.com")
+        page.on("console", lambda m: errors.append(m.text) if m.type == "error" and not any(f in m.location.get("url", "") for f in fonts) else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(url, wait_until="networkidle")
         page.wait_for_selector("#chart3 .segment", timeout=10000)
+        off = page.eval_on_selector_all("#chart2 svg > g[aria-hidden='true']", "gs => gs.filter(g => g.querySelector('.label')).map(g => g.getAttribute('visibility'))")
+        check("the hidden label set is hidden from first paint", off == ["hidden"], off)
 
         # chart 1: 20 bars, each value label = score at 2 decimals, each bar 128px per point
         c1 = data["chart1_ranked_bar"]["top10"] + data["chart1_ranked_bar"]["bottom10"]
@@ -114,6 +119,12 @@ def main():
         check("every comparison image has alt text", all(s["alt"] for s in stills), stills)
         sizes = page.eval_on_selector_all(".pair", "pairs => pairs.map(p => [...p.querySelectorAll('.shot')].map(s => { const b = s.getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; }))")
         check("each figma and d3 pair is the same size", len(sizes) == 3 and all(a == b for a, b in sizes), sizes)
+        crops = page.eval_on_selector_all(".shot-figma", """shots => shots.map((s, i) => {
+            const [vx, vy, vw] = document.querySelector(`#chart${i + 1} svg`).getAttribute('viewBox').split(' ').map(Number);
+            const box = s.getBoundingClientRect(), im = s.querySelector('img'), img = im.getBoundingClientRect(), k = box.width / vw;
+            return [img.left - box.left + vx * k, img.top - box.top + vy * k, im.getAttribute('src').includes(`chart${i + 1}-`)];
+        })""")
+        check("each figma crop shows its chart's viewbox", len(crops) == 3 and all(abs(x) < 0.5 and abs(y) < 0.5 and own for x, y, own in crops), crops)
 
         # data tables: every cell equals this script's own rounding of chart-data.json
         def table(chart):
@@ -196,6 +207,8 @@ def main():
         african = lambda names: all(continents[n] == "Africa" for n in names)
         one, two, three = visible("#chart1"), visible("#chart2"), visible("#chart3")
         check("the filter also filters the tables", three == ["Mauritius"] and african(one) and african(two) and len(two) == sum(continents[s["country"]] == "Africa" for s in all_lines), (len(one), len(two), three))
+        exposed = page.eval_on_selector_all("#chart1 .row, #chart3 .row, #chart2 g:not([aria-hidden]) > .label", "e => e.filter(x => x.getAttribute('aria-hidden') !== 'true').map(x => x.__data__.s ? x.__data__.s.country : x.__data__.country)")
+        check("filtered-out marks leave the accessibility tree", african(exposed), exposed)
         page.click("#continent-oceania")
         page.wait_for_timeout(450)
         stops = page.eval_on_selector_all("#chart2 .label", "l => l.filter(x => x.getAttribute('tabindex') === '0').map(x => x.__data__.s.country)")
@@ -207,8 +220,8 @@ def main():
         check("chart 2 leader lines fade with their labels", leaders and "0.24" in leaders, leaders)
         page.click("#continent-all")
         page.wait_for_timeout(450)
-        cleared = page.eval_on_selector("#chart1 .empty", "e => e.textContent")
-        check("the empty message clears", cleared == "", cleared)
+        cleared = page.eval_on_selector("#chart1 .empty", "e => [e.textContent, e.classList.contains('on')]")
+        check("the empty message clears", cleared == ["", False], cleared)
 
         # controls don't move when pressed: the toggle and the chips keep their size in both states
         size = "e => e.getBoundingClientRect().width"
@@ -320,10 +333,10 @@ def main():
         # the tooltip stays with a focused row on scroll, and steps away when the row is off screen
         keys.keyboard.press("Tab")
         keys.wait_for_timeout(200)
-        beside = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return Math.abs(t.top - r.top) < 80; }")
+        beside = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return t.top < r.bottom + 40 && t.bottom > r.top - 40; }")
         keys.evaluate("window.scrollBy(0, 60)")
         keys.wait_for_timeout(200)
-        still = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return Math.abs(t.top - r.top) < 80; }")
+        still = keys.evaluate("() => { const r = document.activeElement.getBoundingClientRect(), t = document.querySelector('.tooltip').getBoundingClientRect(); return t.top < r.bottom + 40 && t.bottom > r.top - 40; }")
         keys.evaluate("window.scrollBy(0, 1600)")
         keys.wait_for_timeout(250)
         gone = keys.evaluate(describe)
@@ -346,6 +359,39 @@ def main():
         opened = keys.evaluate("(() => { const d = document.querySelector('#chart2 .data-table'), s = d.querySelector('.table-scroll'); return [d.open, s.scrollHeight > s.clientHeight, s.tabIndex]; })()")
         check("a data table opens with the keyboard and scrolls in its box", opened == [True, True, 0], opened)
         keys.keyboard.press("Enter")
+
+        # a mouse parked on a line must not leave stale marks when the keyboard takes over
+        park = """() => {
+            document.querySelector('#chart2 svg').scrollIntoView({ block: 'center' });
+            const b = document.querySelector('#chart2 svg').getBoundingClientRect();
+            const s = b.width / 1760;
+            return [b.x + (176 + 4 * 212 - 80) * s, b.y + (910 - %s * 62 - 200) * s];
+        }""" % next(s for s in lines["fallers"] if s["country"] == "Afghanistan")["scores"][4]
+        marks = """() => [document.querySelector('.tooltip .tooltip-title').textContent, document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('#chart2 svg > line.axisline').getAttribute('visibility')]"""
+        at = keys.evaluate(park)
+        keys.wait_for_timeout(100)
+        at = keys.evaluate(park)
+        keys.mouse.move(at[0], at[1])
+        keys.wait_for_timeout(100)
+        hovering = keys.evaluate(marks)
+        keys.locator("#continent-africa").focus()
+        keys.keyboard.press("Enter")
+        keys.wait_for_timeout(450)
+        gone = keys.evaluate(marks)
+        check("a filter that removes the hovered line removes its tooltip", hovering[0] == "Afghanistan" and hovering[1] and not gone[1] and gone[2] == "hidden", (hovering, gone))
+        keys.locator("#continent-all").focus()
+        keys.keyboard.press("Enter")
+        keys.mouse.move(5, 5)
+        keys.wait_for_timeout(450)
+        at = keys.evaluate(park)
+        keys.wait_for_timeout(100)
+        keys.mouse.move(at[0], at[1])
+        keys.wait_for_timeout(100)
+        keys.locator("#view-decliners").focus()
+        keys.keyboard.press("Tab")
+        keys.wait_for_timeout(100)
+        tabbed = keys.evaluate(marks)
+        check("tabbing to a label clears a parked mouse's crosshair", tabbed[1] and tabbed[0] != "Afghanistan" and tabbed[2] == "hidden", tabbed)
         keys.close()
 
         # a tooltip opened on a phone-width window stays fully inside the window
@@ -357,7 +403,26 @@ def main():
         small.wait_for_timeout(250)
         edge = small.evaluate("(() => { const t = document.querySelector('.tooltip').getBoundingClientRect(); return [t.left, t.right, innerWidth]; })()")
         check("tooltips stay inside a narrow window", edge[0] >= 0 and edge[1] <= edge[2], edge)
+        rect = "t => { const b = t.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom, innerWidth, innerHeight]; }"
+        small.evaluate("fillTooltip('x', ['y']); placeTooltip(innerWidth + 200, innerHeight + 200)")
+        high = small.eval_on_selector(".tooltip", rect)
+        small.evaluate("placeTooltip(-200, -200)")
+        low = small.eval_on_selector(".tooltip", rect)
+        check("a tooltip is clamped on all four sides", high[2] <= high[4] and high[3] <= high[5] and low[0] >= 0 and low[1] >= 0, (high, low))
         small.close()
+
+        # high contrast mode: chart text and marks use system colors, so they stay readable on black
+        contrast = browser.new_context(forced_colors="active", color_scheme="dark").new_page()
+        contrast.goto(url, wait_until="networkidle")
+        contrast.wait_for_selector("#chart3 .segment")
+        painted = contrast.evaluate("""() => {
+            const name = getComputedStyle(document.querySelectorAll('#chart1 .row text')[1]).fill;
+            const halo = getComputedStyle(document.querySelector('#chart1 .value')).stroke;
+            const bar = document.querySelector('#chart1 .bar').getAttribute('fill');
+            return [name, halo, bar];
+        }""")
+        check("high contrast mode recolors chart text and marks", painted[0] != "rgb(29, 29, 31)" and painted[1] != "rgb(255, 255, 255)" and painted[2].lower() != "#00376e", painted)
+        contrast.close()
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace
         calm = browser.new_context(reduced_motion="reduce").new_page()
@@ -377,6 +442,7 @@ def main():
     for name, ok, detail in results:
         print(("PASS " if ok else "FAIL ") + name + ("" if ok else f"  -> {detail}"))
     print(f"{passed}/{len(results)} checks passed")
+    sys.exit(0 if passed == len(results) else 1)
 
 
 if __name__ == "__main__":
