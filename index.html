@@ -41,6 +41,7 @@
     <main class="views">
       <div class="view view-map" id="view-map">
         <div class="map-ground">
+          <svg class="contours" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
           <div class="map-inner">
             <header class="masthead">
               <p class="eyebrow">INFO 4602 · Open Skill 2 · World Happiness surveys 2019–2025</p>
@@ -50,25 +51,57 @@
             </header>
 
             <nav class="trail" aria-label="Plates">
+              <span class="trail-line" aria-hidden="true"></span>
               <a class="stop" href="#plate-1" data-plate="1">
+                <span class="stop-marker" aria-hidden="true">1</span>
+                <span class="stop-icon">
+                  <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="15" y1="3" x2="15" y2="45"/><line x1="33" y1="3" x2="33" y2="45"/>
+                    <line x1="15" y1="18" x2="33" y2="18"/><line x1="15" y1="24" x2="33" y2="24"/><line x1="15" y1="30" x2="33" y2="30"/>
+                    <rect class="lit" x="12" y="6" width="24" height="6" rx="3"/><rect class="lit" x="12" y="36" width="24" height="6" rx="3"/>
+                  </svg>
+                </span>
+                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
                   <span class="stop-plate">Plate 1</span>
                   <span class="stop-title">Happiest and Unhappiest Countries of 2025</span>
                   <span class="stop-dek">Top and bottom 10 ranked countries</span>
+                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
               <a class="stop" href="#plate-2" data-plate="2">
+                <span class="stop-marker" aria-hidden="true">2</span>
+                <span class="stop-icon">
+                  <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 37.5C20 34 12 26 21 24S31 19 33 14" stroke-dasharray="3.5 4"/>
+                    <circle class="plate-fill" cx="9" cy="39" r="3.5"/>
+                    <path d="M35 16V3"/><path class="lit" d="M35 3H44L41 6.5L44 10H35Z"/>
+                  </svg>
+                </span>
+                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
                   <span class="stop-plate">Plate 2</span>
                   <span class="stop-title">Score Change from 2019 to 2025</span>
                   <span class="stop-dek">Top 5 risers and decliners</span>
+                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
               <a class="stop" href="#plate-3" data-plate="3">
+                <span class="stop-marker" aria-hidden="true">3</span>
+                <span class="stop-icon">
+                  <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path class="lit" d="M6 16V12Q6 8 10 8H38Q42 8 42 12V15C38 13 36 13 28 16C20 19 14 13 6 16Z" stroke="none"/>
+                    <rect x="6" y="8" width="36" height="32" rx="4"/>
+                    <path d="M6 16C14 13 20 19 28 16S38 13 42 15"/><path d="M6 24C13 22 21 27 29 24S37 21 42 23"/>
+                    <path d="M6 32C14 30 20 35 28 32S37 29 42 31"/>
+                  </svg>
+                </span>
+                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
                   <span class="stop-plate">Plate 3</span>
                   <span class="stop-title">Factors of Happiness in 2025</span>
                   <span class="stop-dek">Top-ranked country of each continent</span>
+                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
             </nav>

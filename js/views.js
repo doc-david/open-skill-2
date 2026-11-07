@@ -25,8 +25,46 @@ function showView(route) {
     else dot.removeAttribute("aria-current");
   });
   views.scrollTop = 0;
+  if (route === 0) stampExplored();
+  else seen.add(route);
 }
 
+// the map's contour lines: four clusters of wobbly rings, generated once. decoration, no data
+function drawContours() {
+  const clusters = [[1080, 170, 26, 10], [190, 640, 30, 9], [640, 420, 18, 7], [1180, 720, 22, 6]];
+  const rings = [];
+  clusters.forEach(([cx, cy, base, n], c) => {
+    const p = [c * 1.7 + 0.4, c * 2.3 + 1.1, c * 0.9 + 2.0];
+    for (let k = 0; k < n; k++) {
+      const r = base + k * 28;
+      let d = "";
+      for (let i = 0; i < 72; i++) {
+        const a = (i / 72) * 2 * Math.PI;
+        const rr = r * (1 + 0.12 * Math.sin(3 * a + p[0]) + 0.07 * Math.sin(5 * a + p[1] + k * 0.2) + 0.05 * Math.sin(2 * a + p[2]));
+        d += (i ? "L" : "M") + Math.round(cx + rr * Math.cos(a) * 1.45) + "," + Math.round(cy + rr * Math.sin(a));
+      }
+      rings.push(d + "Z");
+    }
+  });
+  d3.select(".contours").selectAll("path").data(rings).join("path").attr("d", d => d);
+}
+
+// a plate you've opened gets an "Explored" stamp on its stop, the first time you come back to the map.
+// stamped is what's showing on the map; seen is everything opened since this page loaded
+const seen = new Set();
+const stamped = new Set();
+
+function stampExplored() {
+  for (const plate of seen) {
+    if (stamped.has(plate)) continue;
+    stamped.add(plate);
+    const stop = document.querySelector(`.stop[data-plate="${plate}"]`);
+    stop.querySelector(".explored").hidden = false;
+    stop.querySelector(".visually-hidden").hidden = false;
+  }
+}
+
+drawContours();
 showView(routeOf(location.hash));
 
 // a new view is a new page to a keyboard or a screen reader, so focus moves to its heading
