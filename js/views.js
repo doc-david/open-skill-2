@@ -60,16 +60,41 @@ function stampExplored() {
     stamped.add(plate);
     const stop = document.querySelector(`.stop[data-plate="${plate}"]`);
     stop.querySelector(".explored").hidden = false;
+    stop.querySelector(".explored").classList.add("fresh");
     stop.querySelector(".visually-hidden").hidden = false;
   }
 }
 
+// how a view arrives. the rules are in css, inside prefers-reduced-motion: no-preference, so people
+// who ask for less motion get none. a hidden element replays its animation when it shows again,
+// so every motion class comes off before the next view opens.
+//   plate to plate: slide in from the side you moved toward
+//   map to plate, or back: grow from the stop you came from
+const stopOrigin = { 1: "18% 64%", 2: "50% 64%", 3: "82% 64%" };
+const motionClasses = ["view-in", "plate-from-right", "plate-from-left", "intro", "fresh"];
+
+function animateView(from, to) {
+  motionClasses.forEach(name => document.querySelectorAll(`.${name}`).forEach(e => e.classList.remove(name)));
+  const view = viewOf(to);
+  if (from !== 0 && to !== 0) {
+    view.classList.add(to > from ? "plate-from-right" : "plate-from-left");
+  } else {
+    view.style.transformOrigin = stopOrigin[from || to];
+    view.classList.add("view-in");
+  }
+}
+
 drawContours();
-showView(routeOf(location.hash));
+let route = routeOf(location.hash);
+showView(route);
+// the stops rise in once, only when the map is the first thing you see
+if (route === 0) document.querySelectorAll(".stop").forEach(stop => stop.classList.add("intro"));
 
 // a new view is a new page to a keyboard or a screen reader, so focus moves to its heading
 window.addEventListener("hashchange", () => {
-  const route = routeOf(location.hash);
+  const next = routeOf(location.hash);
+  if (next !== route) animateView(route, next);
+  route = next;
   showView(route);
   viewOf(route).querySelector("h1, h2").focus();
 });
