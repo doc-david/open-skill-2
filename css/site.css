@@ -1,16 +1,13 @@
-/* layout concept: the figma canvas on the web. a light grey page (the figma sections) holds
-   three white panels (the 1920x1080 dashboard frames), one chart each, in reading order.
-   colors, type and spacing come from tokens.css, which is generated from the figma variables.
-   one deliberate light theme, like the open skill 1 frames, so every color is set explicitly. */
+/* field guide (david's pick): map paper behind numbered plates, one chart each, in forest ink.
+   colors, type and spacing come from tokens.css, which is generated from scripts/figma-variables.json.
+   one deliberate light theme, so every color is set explicitly. */
 :root {
   color-scheme: light;
   /* motion curves from the animate skill: strong ease-out for things appearing,
      strong ease-in-out for things moving on screen */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --panel-radius: 22px;
-  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.16);
-  --shadow-thumb: 0 3px 8px rgba(0, 0, 0, 0.12);
+  --panel-radius: 4px;
 }
 
 * { box-sizing: border-box; }
@@ -21,7 +18,7 @@ body {
   margin: 0;
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -53,23 +50,23 @@ body::before {
 .masthead { display: grid; max-width: 900px; margin-bottom: 12px; }
 .eyebrow {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 h1 {
   margin: 0 0 16px;
-  font-size: clamp(34px, 5.2vw, 56px);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.005em;
   text-wrap: balance;
 }
 .lede {
   margin: 0;
-  max-width: 59ch; /* inter fits about 1.37 characters per ch, so this is about 80 characters */
+  max-width: 66ch;
+  font-family: var(--font-reading);
   font-size: clamp(17px, 1.6vw, 19px);
   line-height: 1.55;
   text-wrap: pretty;
@@ -91,7 +88,7 @@ h1 {
   transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 .filter-bar.is-stuck {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(242, 245, 236, 0.86);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -122,9 +119,10 @@ h1 {
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
-  padding: 9px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--color-line-grid);
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  border: 1.5px solid var(--color-line-axis);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   cursor: pointer;
@@ -138,14 +136,16 @@ h1 {
 }
 .chips button:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
-  .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-line-axis); }
+  .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-text-primary); }
 }
 
 /* panels = the figma dashboard frames */
 .panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
 .panel {
   background: var(--color-bg-primary);
+  border: 1.5px solid var(--color-text-primary);
   border-radius: var(--panel-radius);
+  box-shadow: 4px 4px 0 var(--color-fill-hover);
   padding: clamp(20px, 3.2vw, 40px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -163,27 +163,29 @@ h1 {
 .panel-head > div:first-child { min-width: 0; flex: 1 1 420px; }
 h2 {
   margin: 0;
-  font-size: clamp(24px, 3vw, 34px);
-  line-height: 1.15;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   text-wrap: balance;
 }
 .dek {
   margin: 6px 0 0;
+  font-family: var(--font-reading);
   font-size: clamp(15px, 1.3vw, 17px);
   color: var(--color-text-secondary);
 }
-.note { margin: 6px 0 0; font-size: 14px; color: var(--color-text-secondary); }
+.note { margin: 4px 0 0; font-family: var(--font-reading); font-size: 14px; color: var(--color-text-secondary); }
 
-/* chart 2's segmented control (apple's control for two views of the same content).
-   the white thumb slides between the two segments instead of jumping. */
+/* chart 2's segmented control: two views of the same content.
+   the thumb slides between the two segments instead of jumping. */
 .segmented {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 3px;
-  border-radius: 12px;
+  border-radius: 4px;
   background: var(--color-control-track);
   flex: none;
 }
@@ -193,9 +195,9 @@ h2 {
   left: 3px;
   width: calc(50% - 3px);
   height: calc(100% - 6px);
-  border-radius: 9px;
+  border-radius: 2px;
   background: var(--color-bg-primary);
-  box-shadow: var(--shadow-thumb);
+  box-shadow: 0 0 0 1.5px var(--color-text-primary);
   transition: transform 250ms var(--ease-in-out);
 }
 .segmented[data-view="decliners"] .thumb { transform: translateX(100%); }
@@ -204,9 +206,10 @@ h2 {
   font: inherit;
   font-size: 14px;
   line-height: 1;
-  padding: 10px 16px;
+  min-height: 44px;
+  padding: 11px 16px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 2px;
   background: none;
   color: var(--color-text-primary);
   cursor: pointer;
@@ -236,7 +239,7 @@ h2 {
   font-size: 14px;
 }
 .legend li { display: flex; align-items: center; gap: 8px; }
-.legend .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+.legend .swatch { width: 14px; height: 14px; border-radius: 2px; flex: none; }
 
 /* the chart keeps figma's geometry in its viewbox and scales to the panel.
    on a phone it keeps a readable minimum and scrolls inside its own box. */
@@ -251,7 +254,7 @@ h2 {
   gap: 10px;
   margin-inline: -12px;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 3px;
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
@@ -277,7 +280,7 @@ h2 {
   max-height: 440px;
   overflow: auto;
   overscroll-behavior: contain;
-  border-radius: 10px;
+  border-radius: 3px;
   box-shadow: inset 0 0 0 1px var(--color-bg-secondary);
 }
 .data-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -323,10 +326,10 @@ h2 {
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--color-bg-primary);
-  box-shadow: 0 0 0 1px var(--color-line-grid), 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: 3px;
+  background: var(--color-tooltip-bg);
   font-size: 14px;
   line-height: 1.4;
   color: var(--color-text-primary);
@@ -340,16 +343,16 @@ h2 {
 /* figma vs d3: each pair is cropped to the same chart region, so the two line up point for point */
 .compare { gap: 40px; }
 .pair { display: grid; gap: 14px; min-width: 0; }
-.pair h3 { margin: 0; font-size: 19px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+.pair h3 { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 1.25; font-weight: 600; }
 .pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .pair figure { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
-.pair figcaption { font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; text-wrap: pretty; }
-.pair figcaption strong { color: var(--color-text-primary); font-weight: 600; }
+.pair figcaption { font-family: var(--font-reading); font-size: 15px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; text-wrap: pretty; }
+.pair figcaption strong { color: var(--color-text-primary); font-weight: 700; }
 .shot {
   position: relative;
   aspect-ratio: 1760 / var(--h);
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 3px;
   background: var(--color-bg-primary);
   box-shadow: 0 0 0 1px var(--color-line-grid);
 }
@@ -366,13 +369,14 @@ h2 {
 .colophon {
   display: grid;
   gap: 10px;
-  max-width: 60ch;
+  max-width: 72ch;
   padding-top: 8px;
-  font-size: 14px;
+  font-family: var(--font-reading);
+  font-size: 15px;
   color: var(--color-text-secondary);
 }
 .colophon p { margin: 0; text-wrap: pretty; }
-.colophon strong { color: var(--color-text-primary); font-weight: 600; }
+.colophon strong { color: var(--color-text-primary); font-weight: 700; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
 
 .error {
@@ -384,16 +388,16 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 }
 
 /* svg text uses the figma text styles at figma's own size; the viewbox scales them with the chart */
-.chart text { font-family: var(--font-family); font-variant-numeric: tabular-nums; }
+.chart text { font-family: var(--font-ui); font-variant-numeric: tabular-nums; }
 .t-footnote { font-size: var(--font-size-footnote); }
 .t-caption { font-size: var(--font-size-caption-1); }
 .strong { font-weight: 600; }
 .ink { fill: var(--color-text-primary); }
-.muted { fill: var(--color-text-secondary); }
-/* a white halo lets a label sit on top of gridlines, like the label backings in figma */
+.muted { fill: var(--color-text-chart-muted); }
+/* a plate-colored halo lets a label sit on top of gridlines, like the label backings in figma */
 .halo { paint-order: stroke; stroke: var(--color-bg-primary); stroke-width: 8px; stroke-linejoin: round; }
 
-.gridline { stroke: var(--color-line-grid); stroke-width: 1px; shape-rendering: crispEdges; }
+.gridline { stroke: var(--color-line-grid); stroke-width: 1px; stroke-dasharray: 3 7; shape-rendering: crispEdges; }
 .axisline { stroke: var(--color-line-axis); stroke-width: 1px; shape-rendering: crispEdges; }
 
 /* hover: the hovered mark stays, everything else steps back (the figma hover tint vanished on navy bars) */
@@ -412,7 +416,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   .tooltip:not(.visible) { transition-delay: 100ms; }
 }
 
-/* the one shared tooltip (apple style: dark, 12px radius, values first) */
+/* the one shared tooltip: a field note, values first */
 .tooltip {
   position: fixed;
   left: 0;
@@ -420,20 +424,21 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   z-index: 20;
   max-width: 300px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--color-text-primary);
-  box-shadow: var(--shadow-tooltip);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: 4px;
+  background: var(--color-tooltip-bg);
+  box-shadow: 3px 3px 0 var(--color-tooltip-shadow);
   pointer-events: none;
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
 }
 .tooltip.visible { opacity: 1; }
-.tooltip-title { font-size: 15px; font-weight: 600; color: var(--color-bg-primary); }
-.tooltip-lines { margin-top: 2px; font-size: 13px; line-height: 1.45; color: #c7c7cc; font-variant-numeric: tabular-nums; }
-.tooltip-lines div:first-child { color: var(--color-bg-primary); font-weight: 600; font-size: 14px; }
+.tooltip-title { font-size: 15px; font-weight: 700; line-height: 1.35; color: var(--color-text-primary); }
+.tooltip-lines { margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.tooltip-lines div:first-child { color: var(--color-text-primary); font-weight: 600; }
 
 :focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
-.row, .label, .segmented button, .data-table summary, .table-scroll { scroll-margin-top: 72px; }
+.row, .label, .segmented button, .data-table summary, .table-scroll { scroll-margin-top: 92px; }
 .table-scroll:focus-visible { outline-offset: 0; }
 
 /* windows high contrast mode: keep the legend's colors and show which control is selected */

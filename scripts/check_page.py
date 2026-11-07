@@ -182,11 +182,11 @@ def main():
             page.locator("#chart2").screenshot(path=f"{args.shots}/chart2-hover.png")
         page.mouse.move(5, 5)
 
-        # interaction 3: the toggle swaps which five lines are navy
+        # interaction 3: the toggle swaps which five lines are forest
         page.click("#view-decliners")
         page.wait_for_timeout(450)
-        navy = page.eval_on_selector_all("#chart2 svg > g[aria-hidden] path", "p => p.filter(x => ['#00376e', 'rgb(0, 55, 110)'].includes(x.getAttribute('stroke'))).map(x => x.__data__.country)")
-        check("toggle highlights the decliners", sorted(navy) == sorted(s["country"] for s in lines["fallers"]), navy)
+        forest = page.eval_on_selector_all("#chart2 svg > g[aria-hidden] path", "p => p.filter(x => ['#18322a', 'rgb(24, 50, 42)'].includes(x.getAttribute('stroke'))).map(x => x.__data__.country)")
+        check("toggle highlights the decliners", sorted(forest) == sorted(s["country"] for s in lines["fallers"]), forest)
         if args.shots:
             page.locator("#chart2").screenshot(path=f"{args.shots}/chart2-decliners.png")
 
@@ -421,7 +421,7 @@ def main():
             const bar = document.querySelector('#chart1 .bar').getAttribute('fill');
             return [name, halo, bar];
         }""")
-        check("high contrast mode recolors chart text and marks", painted[0] != "rgb(29, 29, 31)" and painted[1] != "rgb(255, 255, 255)" and painted[2].lower() != "#00376e", painted)
+        check("high contrast mode recolors chart text and marks", painted[0] != "rgb(24, 50, 42)" and painted[1] != "rgb(250, 251, 247)" and painted[2].lower() != "#18322a", painted)
         contrast.close()
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace

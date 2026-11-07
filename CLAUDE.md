@@ -6,6 +6,7 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 1. `git pull --ff-only` in this repo
 2. Read the vault first (David's standing rule): `C:\David Projects\Github\ultimate-brain\school\info-4602\open-skill-2\` (on the PC it's under `D:\`). Read `open-skill-2.md` (status and decisions), `open-skill-2-playbook.md` (rules, Done means, Checks) and `toolbox/`. Pull the vault with `git pull --ff-only` before reading
 3. Say in one line which playbook version you're working from
+4. Tonight's task: build David's Field Guide pick, the trail-map game menu. The plan is `toolbox/field-guide-handoff.md` in the vault; read it before anything else
 
 ## What this is
 - INFO 4602 Open Skill 2. The skill is **D3.js**: rebuilding the Open Skill 1 Figma dashboards with the interactions Figma couldn't do. The direction was picked by an LLM council on Nov 6
@@ -20,8 +21,8 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 - **Course AI rule.** AI may write code but doesn't decide what a chart should be. David decides every chart, interaction and piece of copy, so propose and ask before changing them. Keep the AI-use comment in `js/main.js`
 - **Design tokens** come from Figma: edit `scripts/figma-variables.json` (or re-pull with the Figma MCP `get_variable_defs`) and run `python scripts/figma_tokens.py`. Don't hand-edit `css/tokens.css`
 - **Geometry parity.** Each chart's viewBox uses the Figma slide's coordinates (PRD §7), so the D3 charts line up with the Figma frames side by side. Keep x0, the 128 px-per-point scales and the row pitches unless David approves a change
-- **David's Open Skill 1 decisions stand:** descriptive title-case titles, chart 1's hover target is the bar itself, "decliners" not "fallers" (the data key stays `fallers`), one navy accent `#00376E`, the factor palette as validated
-- Scope fence: no React/Svelte, multi-page sites, Code Connect, shaders or Runway tonight
+- **David's Open Skill 1 decisions stand:** descriptive title-case titles, chart 1's hover target is the bar itself, "decliners" not "fallers" (the data key stays `fallers`). The look is now Field Guide (David, Nov 6): forest `#18322A` replaces the navy accent, the validated pigments replace the factor palette, and National Park, Source Serif 4 and IBM Plex Sans Condensed replace Inter (vault: `toolbox/style-directions.md`)
+- Scope fence: no React/Svelte, multi-page sites (the Field Guide screens are views inside `index.html`), Code Connect, shaders or Runway tonight. Not tonight either (David): Find a country, Surprise me, the passport, the tour, Figma vs D3 as a fourth stop, a phone layout
 
 ## How to run and check
 - Serve: `python -m http.server 8000`, then open http://localhost:8000
@@ -31,7 +32,7 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 
 ## Refinement status (Nov 6)
 Done in Claude Code: the audit, the Figma vs D3 section, the approved polish, data tables, keyboard and high-contrast paths. David kept chart 2's grey-lines note as written and dropped the phone layout. Impeccable and frontend-design are installed in `~/.claude/skills` (skill only, no design hook).
-Open for David, nothing built: whether to apply a look from the style-direction board (`toolbox/style-directions.md` in the vault; the site is refined in its current look, and `/impeccable init` and `document` haven't run); chart 2 going silent in 8 of 12 filter and toggle states; hover on filtered-out rows; hover on chart 2's end labels; a score definition and hover hints; byline and links; messages for a failed data load; a name for the table scrollers. Accessibility calls: values dimming to 2.17:1 during hover or focus, the tooltip that can't be hovered, grey lines at 1.52:1, and the toggle thumb at 1.16:1.
+David picked a look on Nov 6: Field Guide as a trail-map game menu. Tonight's scope is the screens, the colors and fonts, and the stop icons (`toolbox/field-guide-handoff.md` in the vault; `/impeccable init` and `document` haven't run). Still open for David, nothing built: chart 2 going silent in 8 of 12 filter and toggle states; hover on filtered-out rows; hover on chart 2's end labels; a score definition and hover hints; byline and links; messages for a failed data load; a name for the table scrollers. Accessibility calls: values dimming to 2.17:1 during hover or focus, the tooltip that can't be hovered, grey lines at 1.52:1, and the toggle thumb at 1.16:1.
 
 ## Known issues
 - Checker agent (clean context, Nov 6): all six Done means lines pass. It found three issues, all fixed: rows blinked on the first filter click, the sticky bar's grey label lost contrast over scrolling text, and hover fades ignored reduced motion

@@ -16,7 +16,7 @@ function systemColor(name) {
 
 const colors = {
   ink: token("color-text-primary"),
-  muted: token("color-text-secondary"),
+  muted: token("color-text-chart-muted"),
   paper: token("color-bg-primary"),
   grid: token("color-line-grid"),
   axis: token("color-line-axis"),

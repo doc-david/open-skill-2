@@ -64,13 +64,13 @@ function chart2(data, continents) {
   const nodeOf = new Map();
   paths.each(function (s) { nodeOf.set(s, this); });
 
-  // dots at 2019 and 2025 for the ten countries the toggle can highlight
-  const ends = series.filter(s => risers.has(s.country) || decliners.has(s.country))
-    .flatMap(s => [{ s, year: 2019, score: s.scores[0] }, { s, year: 2025, score: s.scores[6] }]);
+  // waypoints: a dot at every survey year for the ten countries the toggle can highlight
+  const waypoints = series.filter(s => risers.has(s.country) || decliners.has(s.country))
+    .flatMap(s => lines.years.map((year, i) => ({ s, year, score: s.scores[i] })));
   const dots = svg.append("g").attr("aria-hidden", "true")
-    .selectAll("circle").data(ends).join("circle")
+    .selectAll("circle").data(waypoints).join("circle")
     .attr("cx", d => x(d.year)).attr("cy", d => y(d.score))
-    .attr("fill", colors.focus).attr("stroke", colors.paper).attr("stroke-width", 4)
+    .attr("fill", colors.focus).attr("stroke", colors.paper).attr("stroke-width", 3)
     .style("paint-order", "stroke");
 
   // the dot that rides along the hovered line
@@ -216,7 +216,8 @@ function chart2(data, continents) {
     tableRows.classed("highlighted", highlighted).attr("aria-current", s => highlighted(s) ? "true" : null);
 
     (animate ? dots.transition(t) : dots)
-      .attr("r", d => highlighted(d.s) ? 5 : 3)
+      // 10 units across at the ends of a highlighted line, 7 between
+      .attr("r", d => !highlighted(d.s) ? 2.5 : d.year === 2019 || d.year === 2025 ? 5 : 3.5)
       .attr("opacity", d => highlighted(d.s) ? (included(d.s) ? 1 : faded) : 0);
 
     // the outgoing labels slide up and fade, the incoming ones slide in from below
