@@ -31,7 +31,7 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 
 ## Refinement status (Nov 6)
 Done in Claude Code: the audit, the Figma vs D3 section, the approved polish, data tables, keyboard and high-contrast paths. David kept chart 2's grey-lines note as written and dropped the phone layout. Impeccable and frontend-design are installed in `~/.claude/skills` (skill only, no design hook).
-Open for David, nothing built: chart 2 going silent in 8 of 12 filter and toggle states; hover on filtered-out rows; hover on chart 2's end labels; a score definition and hover hints; byline and links; messages for a failed data load; a name for the table scrollers. Accessibility calls: values dimming to 2.17:1 during hover or focus, the tooltip that can't be hovered, grey lines at 1.52:1, and the toggle thumb at 1.16:1.
+Open for David, nothing built: whether to apply a look from the style-direction board (`toolbox/style-directions.md` in the vault; the site is refined in its current look, and `/impeccable init` and `document` haven't run); chart 2 going silent in 8 of 12 filter and toggle states; hover on filtered-out rows; hover on chart 2's end labels; a score definition and hover hints; byline and links; messages for a failed data load; a name for the table scrollers. Accessibility calls: values dimming to 2.17:1 during hover or focus, the tooltip that can't be hovered, grey lines at 1.52:1, and the toggle thumb at 1.16:1.
 
 ## Known issues
 - Checker agent (clean context, Nov 6): all six Done means lines pass. It found three issues, all fixed: rows blinked on the first filter click, the sticky bar's grey label lost contrast over scrolling text, and hover fades ignored reduced motion
