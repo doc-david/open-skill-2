@@ -78,6 +78,19 @@ def main():
     url = f"http://127.0.0.1:{server.server_port}/index.html"
     errors = []
 
+    try:
+        run_checks(args, url, errors)
+    except Exception as crash:
+        check("the checks ran to the end", False, str(crash).splitlines()[0])
+    server.shutdown()
+    passed = sum(ok for _, ok, _ in results)
+    for name, ok, detail in results:
+        print(("PASS " if ok else "FAIL ") + name + ("" if ok else f"  -> {detail}"))
+    print(f"{passed}/{len(results)} checks passed")
+    sys.exit(0 if passed == len(results) else 1)
+
+
+def run_checks(args, url, errors):
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
@@ -130,7 +143,7 @@ def main():
         open_view(page, "map")
         # figma vs d3: every still loads, has alt text, and each pair shows the same chart region
         page.eval_on_selector_all(".compare img", "imgs => imgs.forEach(i => { i.loading = 'eager'; })")
-        page.wait_for_function("[...document.querySelectorAll('.compare img')].every(i => i.complete)")
+        page.wait_for_function("[...document.querySelectorAll('.compare img')].every(i => i.complete && i.naturalWidth > 0)")
         stills = page.eval_on_selector_all(".compare img", "imgs => imgs.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth, alt: i.alt }))")
         figma = [s for s in stills if "/figma/" in s["src"]]
         d3s = [s for s in stills if "/d3/" in s["src"]]
@@ -294,6 +307,112 @@ def main():
         if args.shots:
             page.screenshot(path=f"{args.shots}/phone.png", full_page=False)
 
+        # the map: three stops with david's titles and deks, in order, and the computed kicker
+        nav = browser.new_page(viewport={"width": 1280, "height": 720})
+        nav.goto(url, wait_until="networkidle")
+        nav.wait_for_selector("#chart3 .segment", state="attached")
+        titles = ["Happiest and Unhappiest Countries of 2025", "Score Change from 2019 to 2025", "Factors of Happiness in 2025"]
+        deks = ["Top and bottom 10 ranked countries", "Top 5 risers and decliners", "Top-ranked country of each continent"]
+        stops = nav.eval_on_selector_all(".stop", """s => s.map(x => [x.getAttribute('href'), x.querySelector('.stop-plate').textContent, x.querySelector('.stop-title').textContent,
+            x.querySelector('.stop-dek').textContent, x.querySelector('.stop-icon svg').getAttribute('aria-hidden')])""")
+        check("the map has three stops with david's titles and deks, in order", stops == [[f"#plate-{n + 1}", f"Plate {n + 1}", titles[n], deks[n], "true"] for n in range(3)], stops)
+        same = nav.evaluate("[1, 2, 3].map(n => [document.querySelector(`#chart${n} h2`).textContent, document.querySelector(`#chart${n} .dek`).textContent])")
+        check("each plate's title and dek match its stop", same == [[titles[n], deks[n]] for n in range(3)], same)
+        kicker = nav.text_content(".kicker")
+        count = len(lines["context_series"]) + len(lines["risers"]) + len(lines["fallers"])
+        check("the kicker counts chart 2's countries", kicker == f"A field guide to {count} countries", kicker)
+        check("one continent group, in the hud", nav.evaluate("[document.querySelectorAll('#continent').length, !!document.querySelector('.hud #continent')]") == [1, True])
+        contours = nav.evaluate("(() => { const c = document.querySelector('.contours'); return [c.getAttribute('aria-hidden'), c.querySelectorAll('path').length]; })()")
+        check("the contour lines are decorative and drawn", contours == ["true", 32], contours)
+
+        # which view is showing, what has focus, and what the hud says
+        where = """() => {
+            const shown = [...document.querySelectorAll('.view')].filter(v => !v.hidden).map(v => v.id);
+            const current = [...document.querySelectorAll('.hud-dots a')].filter(a => a.getAttribute('aria-current') === 'page').map(a => a.getAttribute('href'));
+            return { shown, focus: document.activeElement.id || document.activeElement.tagName, count: document.getElementById('hud-plates').hidden ? null : document.getElementById('hud-count').textContent, current };
+        }"""
+
+        def go(selector):
+            try:
+                nav.click(selector, timeout=2000)
+            except Exception:
+                return {"could not click": selector}
+            nav.wait_for_timeout(50)
+            return nav.evaluate(where)
+
+        at_map = {"shown": ["view-map"], "focus": "H1", "count": None, "current": []}
+        at_plate = lambda n: {"shown": [f"chart{n}"], "focus": f"chart{n}-title", "count": f"Plate {n} of 3", "current": [f"#plate-{n}"]}
+        first = nav.evaluate(where)
+        check("the map shows first, with no plate controls", first["shown"] == ["view-map"] and first["count"] is None, first)
+        got = []
+        for n in (1, 2, 3):
+            got.append(go(f".stop[data-plate='{n}']") == at_plate(n))
+            got.append(go("#hud-back") == at_map)
+        check("each stop opens its plate and focus lands on its heading; back returns to the map", all(got), got)
+        got = [go(".stop[data-plate='1']") == at_plate(1), go(".hud-dots a[aria-label='Plate 3']") == at_plate(3), go(".hud-dots a[aria-label='Plate 2']") == at_plate(2)]
+        check("the plate dots land on the right plate and mark it current", all(got), got)
+        got = [go("#chart2 .plate-nav a:has-text('Plate 1')") == at_plate(1), go("#chart1 .plate-nav a:has-text('Plate 2')") == at_plate(2),
+               go("#chart2 .plate-nav a:has-text('Plate 3')") == at_plate(3), go("#chart3 .plate-nav a:has-text('Plate 2')") == at_plate(2),
+               go("#chart2 .plate-nav a:has-text('Plate 3')") == at_plate(3), go("#chart3 .plate-nav a:has-text('Back to the map')") == at_map]
+        labels = nav.eval_on_selector_all(".plate-nav a", "a => a.map(x => x.textContent)")
+        check("previous and next land on the right view, with the handoff's labels", all(got) and labels == ["Plate 2", "Plate 1", "Plate 3", "Plate 2", "Back to the map"], (got, labels))
+        nav.go_back()
+        nav.wait_for_timeout(100)
+        back = nav.evaluate(where)
+        nav.reload(wait_until="networkidle")
+        nav.wait_for_selector("#chart3 .segment", state="attached")
+        reloaded = nav.evaluate(where)
+        check("the back button and a reload keep the view", back["shown"] == ["chart3"] and reloaded["shown"] == ["chart3"] and reloaded["count"] == "Plate 3 of 3" and reloaded["current"] == ["#plate-3"], (back, reloaded))
+        nav.evaluate("location.hash = '#nowhere'")
+        nav.wait_for_timeout(100)
+        unknown = nav.evaluate(where)
+        check("an unknown hash shows the map", unknown["shown"] == ["view-map"], unknown)
+
+        # explored stamps: none before a visit, one after, and each lands once
+        nav.goto("about:blank")
+        nav.goto(url, wait_until="networkidle")
+        nav.wait_for_selector("#chart3 .segment", state="attached")
+        stamps = """() => [...document.querySelectorAll('.stop')].map(s => {
+            const e = s.querySelector('.explored');
+            return [!e.hidden, e.classList.contains('fresh'), s.textContent.includes(', explored') && !s.querySelector('.visually-hidden').hidden];
+        })"""
+        none = nav.evaluate(stamps)
+        go(".stop[data-plate='2']")
+        go("#hud-back")
+        one = nav.evaluate(stamps)
+        name = nav.get_by_role("link", name="Plate 2 Score Change from 2019 to 2025 Top 5 risers and decliners , explored").count()
+        go(".stop[data-plate='3']")
+        go("#hud-back")
+        two = nav.evaluate(stamps)
+        check("explored appears only after a visit, and lands once", none == [[False, False, False]] * 3 and one == [[False, False, False], [True, True, True], [False, False, False]] and two == [[False, False, False], [True, False, True], [True, True, True]], (none, one, two))
+        check("a screen reader hears explored on the stop's link", name == 1, name)
+
+        # the chips drive all three charts from the map and from every plate
+        def solid():
+            return nav.evaluate("""() => [
+                [...document.querySelectorAll('#chart1 .row')].filter(r => r.getAttribute('opacity') === '1').map(r => r.__data__.country),
+                [...document.querySelectorAll('#chart2 svg > g[aria-hidden] path')].filter(r => +r.getAttribute('opacity') === 1).map(r => r.__data__.country),
+                [...document.querySelectorAll('#chart3 .row')].filter(r => r.getAttribute('opacity') === '1').map(r => r.__data__.country)]""")
+        driven = []
+        for view, chip, place in [("map", "europe", "Europe"), ("plate-1", "asia", "Asia"), ("plate-2", "africa", "Africa"), ("plate-3", "south-america", "South America")]:
+            nav.evaluate(f"location.hash = '#{view}'")
+            nav.wait_for_timeout(100)
+            nav.click(f"#continent-{chip}")
+            nav.wait_for_timeout(450)
+            one_, two_, three_ = solid()
+            everyone = [s["country"] for s in all_lines]
+            ok = (sorted(one_) == sorted(r["country"] for r in c1 if continents[r["country"]] == place)
+                  and sorted(two_) == sorted(c for c in everyone if continents[c] == place)
+                  and sorted(three_) == sorted(r["country"] for r in rows if continents[r["country"]] == place)
+                  and len(three_) == 1 and len(two_) > 0)
+            driven.append((view, place, ok))
+        check("the chips drive all three charts from the map and every plate", all(d[2] for d in driven), driven)
+        nav.click("#continent-all")
+        nav.wait_for_timeout(450)
+        everything = [len(x) for x in solid()]
+        check("the all chip brings every mark back", everything == [20, 133, 6], everything)
+        nav.close()
+
         # keyboard paths, on a short window: tab through each view from the top, forward and back
         keys = browser.new_page(viewport={"width": 1440, "height": 700})
         describe = """() => {
@@ -454,6 +573,87 @@ def main():
         check("high contrast mode recolors chart text and marks", painted[0] != "rgb(24, 50, 42)" and painted[1] != "rgb(250, 251, 247)" and painted[2].lower() != "#18322a", painted)
         contrast.close()
 
+        # one screen from 1280x720 to 1920x1080: nothing scrolls, and each chart keeps its figma viewbox
+        boxes = {1: "80 200 1760 760", 2: "80 200 1760 760", 3: "80 280 1760 680"}
+        fits = []
+        for size in ((1280, 720), (1366, 768), (1920, 1080)):
+            fit = browser.new_page(viewport={"width": size[0], "height": size[1]})
+            fit.goto(url, wait_until="networkidle")
+            fit.wait_for_selector("#chart3 .segment", state="attached")
+            ground = fit.evaluate("(() => { const v = document.querySelector('.views'), g = document.querySelector('.map-ground'); return g.offsetHeight <= v.clientHeight + 1 && g.scrollHeight <= g.clientHeight + 1 && g.getBoundingClientRect().bottom <= innerHeight + 1; })()")
+            fits.append((size, "map", ground))
+            for n in (1, 2, 3):
+                open_view(fit, f"plate-{n}")
+                state = fit.evaluate(f"""(() => {{
+                    const v = document.querySelector('.views'), svg = document.querySelector('#chart{n} .chart svg');
+                    const row = document.querySelector('#chart{n} .chart-row').getBoundingClientRect(), box = svg.getBoundingClientRect();
+                    return [v.scrollHeight <= v.clientHeight + 1, document.documentElement.scrollHeight <= innerHeight, Math.abs(box.width - row.width) < 1 && Math.abs(box.height - row.height) < 1, svg.getAttribute('viewBox'), row.height > 300];
+                }})()""")
+                fits.append((size, n, state == [True, True, True, boxes[n], True], state))
+            fit.close()
+        check("the map and each plate fit one screen from 1280x720 to 1920x1080", all(f[2] for f in fits), [f for f in fits if not f[2]])
+
+        # no sideways scroll at 390px on any view, including with a table open
+        narrow = browser.new_page(viewport={"width": 390, "height": 844})
+        narrow.goto(url, wait_until="networkidle")
+        narrow.wait_for_selector("#chart3 .segment", state="attached")
+        widths = []
+        for view in ("map", "plate-1", "plate-2", "plate-3"):
+            open_view(narrow, view)
+            widths.append(narrow.evaluate("document.documentElement.scrollWidth"))
+            if view != "map":
+                narrow.click(f"#chart{view[-1]} .data-table summary")
+                narrow.wait_for_timeout(50)
+                widths.append(narrow.evaluate("document.documentElement.scrollWidth"))
+        check("no sideways scroll at 390px on any view, tables open or closed", all(w <= 390 for w in widths), widths)
+        if args.shots:
+            open_view(narrow, "map")
+            narrow.screenshot(path=f"{args.shots}/phone-map.png")
+        narrow.close()
+
+        # motion: the classes land where the handoff says
+        moving = browser.new_page(viewport={"width": 1280, "height": 720})
+        moving.goto(url, wait_until="networkidle")
+        moving.wait_for_selector("#chart3 .segment", state="attached")
+        step = lambda selector, probe: (moving.click(selector), moving.wait_for_timeout(40), moving.evaluate(probe))[2]
+        intro = moving.eval_on_selector_all(".stop.intro", "s => s.map(x => getComputedStyle(x).animationName + ' ' + getComputedStyle(x).animationDelay)")
+        check("the stops rise in on first load, 60ms apart", intro == ["stop-in 0s", "stop-in 0.06s", "stop-in 0.12s"], intro)
+        grown = step(".stop[data-plate='3']", "(() => { const v = document.getElementById('chart3'), c = getComputedStyle(v); return [v.classList.contains('view-in'), c.animationDuration, v.style.transformOrigin, document.getAnimations().some(a => a.animationName === 'view-in')]; })()")
+        check("a plate grows from the stop you came from", grown == [True, "0.22s", "82% 64%", True], grown)
+        slid = [step(".hud-dots a[href='#plate-1']", "document.getElementById('chart1').className"), step(".hud-dots a[href='#plate-2']", "document.getElementById('chart2').className")]
+        check("plate to plate slides the way you moved", "plate-from-left" in slid[0] and "plate-from-right" in slid[1], slid)
+        later = step("#hud-back", "[document.querySelectorAll('.stop.intro').length, document.getElementById('view-map').classList.contains('view-in'), document.getElementById('view-map').style.transformOrigin]")
+        check("the stops don't rise again on later visits", later == [0, True, "50% 64%"], later)
+        moving.wait_for_timeout(300)
+        moving.hover(".stop[data-plate='1']")
+        moving.wait_for_timeout(250)
+        lift = moving.eval_on_selector(".stop[data-plate='1']", "s => getComputedStyle(s).transform")
+        check("hovering lifts a stop 3px", lift == "matrix(1, 0, 0, 1, 0, -3)", lift)
+        moving.close()
+
+        # someone who asks for less motion gets no moving screens, and no transforms from any of it
+        still = browser.new_context(reduced_motion="reduce", viewport={"width": 1280, "height": 720}).new_page()
+        still.goto(url, wait_until="networkidle")
+        still.wait_for_selector("#chart3 .segment", state="attached")
+        probe = """() => [document.getAnimations().filter(a => a.animationName).map(a => a.animationName),
+            getComputedStyle(document.querySelector('.view:not([hidden])')).transform,
+            [...document.querySelectorAll('.stop')].map(s => getComputedStyle(s).transform)]"""
+        seen_ = [still.evaluate(probe)]
+        still.click(".stop[data-plate='1']")
+        still.wait_for_timeout(40)
+        seen_.append(still.evaluate(probe))
+        still.click(".hud-dots a[href='#plate-2']")
+        still.wait_for_timeout(40)
+        seen_.append(still.evaluate(probe))
+        still.click("#hud-back")
+        still.wait_for_timeout(40)
+        seen_.append(still.evaluate(probe))
+        still.hover(".stop[data-plate='2']")
+        still.wait_for_timeout(250)
+        seen_.append(still.evaluate(probe))
+        check("reduced motion adds no animations or transforms", all(a == [] and t == "none" and all(x == "none" for x in st) for a, t, st in seen_), seen_)
+        still.close()
+
         # someone who asks for less motion gets no fades and no delays, including the hover grace
         calm = browser.new_context(reduced_motion="reduce").new_page()
         calm.goto(f"{url}#plate-1", wait_until="networkidle")
@@ -467,12 +667,6 @@ def main():
 
     check("no console errors", not errors, errors)
     check("reduced motion has no delayed hover fades", reduced_ok, reduced)
-    server.shutdown()
-    passed = sum(ok for _, ok, _ in results)
-    for name, ok, detail in results:
-        print(("PASS " if ok else "FAIL ") + name + ("" if ok else f"  -> {detail}"))
-    print(f"{passed}/{len(results)} checks passed")
-    sys.exit(0 if passed == len(results) else 1)
 
 
 if __name__ == "__main__":

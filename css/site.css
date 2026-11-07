@@ -180,7 +180,7 @@ h1 {
 }
 .lede {
   margin: 0;
-  max-width: 82ch;
+  max-width: 68ch; /* source serif fits about 1.15 characters per ch, so about 78 characters */
   font-family: var(--font-reading);
   font-size: clamp(16px, 1.45vw, 19px);
   line-height: 1.5;
