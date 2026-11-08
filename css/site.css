@@ -52,6 +52,7 @@ body {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
 }
+.views:has(> .view-map:not([hidden])) { background: var(--color-hud); }
 .views {
   /* always the second row, so it still fills the window when the map hides the hud */
   grid-row: 2;
@@ -177,21 +178,33 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   gap: clamp(20px, 4vh, 40px);
 }
 .masthead { display: grid; }
-/* the map's pause button: the moving background starts on its own and never ends, so it can be
-   stopped (wcag 2.2.2). top right of the map's content, first in the tab order */
+/* the map's pause toggle: the moving background starts on its own and never ends, so it can be
+   stopped (wcag 2.2.2). a small round icon in the window's top right corner, first in the tab order;
+   its pressed state says the motion is paused (david, nov 7: a small toggle in the corner) */
 .motion-toggle {
   position: absolute;
-  top: clamp(12px, 2.5vh, 24px);
-  right: max(20px, env(safe-area-inset-right, 0px));
+  top: 14px;
+  right: max(14px, env(safe-area-inset-right, 0px));
   z-index: 1;
-  border-color: var(--color-on-forest-secondary);
-  background: transparent;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1.5px solid var(--color-on-forest-secondary);
+  border-radius: 50%;
+  background: var(--color-hud);
   color: var(--color-on-forest-primary);
+  cursor: pointer;
 }
+/* the hit area reaches 44px, though the circle is 36 */
+.motion-toggle::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; }
+.motion-toggle[aria-pressed="true"] { background: var(--color-highlighter); border-color: var(--color-highlighter); color: var(--color-text-primary); }
+.motion-toggle:focus-visible { outline-color: var(--color-highlighter); }
 .motion-icon { flex: none; fill: currentColor; }
 .motion-icon[hidden] { display: none; }
 @media (hover: hover) and (pointer: fine) {
-  .motion-toggle:hover { background: var(--color-contour); }
+  .motion-toggle:hover:not([aria-pressed="true"]) { background: var(--color-contour); }
 }
 /* with reduced motion nothing moves, so there's nothing to pause */
 @media (prefers-reduced-motion: reduce) {
@@ -614,7 +627,7 @@ h2 {
   .segmented .thumb, .data-table summary::before { transition: transform var(--spring-quick-time) var(--spring-quick); }
 
   /* screens: from the map, a chart grows out of its stop; chart to chart slides the way you moved */
-  .view-in { animation: fade-in 200ms var(--ease-out) backwards, grow-in var(--spring-view-time) var(--spring-view) backwards; }
+  .chart-screen.view-in, .view-map.view-in .map-inner { animation: fade-in 200ms var(--ease-out) backwards, grow-in var(--spring-view-time) var(--spring-view) backwards; }
   .chart-from-right { animation: fade-in 200ms var(--ease-out) backwards, from-right var(--spring-view-time) var(--spring-view) backwards; }
   .chart-from-left { animation: fade-in 200ms var(--ease-out) backwards, from-left var(--spring-view-time) var(--spring-view) backwards; }
   .views.settling { overflow: hidden; }
@@ -625,7 +638,6 @@ h2 {
      out from their centers, the title pops in a letter at a time, the stops
      spring up one by one, and their markers and icons pop. it plays once, only when the map is the
      first thing you see */
-  .view-map.intro .contours { animation: fade-in 600ms var(--ease-out) backwards; }
   .view-map.intro .kicker { animation: fade-in 240ms var(--ease-out) backwards, rise-in var(--spring-view-time) var(--spring-view) backwards; }
   .view-map.intro h1 .letter { animation: fade-in 120ms var(--ease-out) backwards, pop-in var(--spring-pop-time) var(--spring-pop) backwards; animation-delay: calc(80ms + var(--letter) * 35ms); }
   .view-map.intro .stop { animation: fade-in 240ms var(--ease-out) backwards, stop-in var(--spring-bouncy-time) var(--spring-bouncy) backwards; animation-delay: 240ms; }
@@ -682,8 +694,8 @@ h2 {
   .views { overflow: visible; }
   .view-map { height: auto; }
   .trail { grid-template-columns: minmax(0, 1fr); }
+  .map-inner { padding-top: 64px; } /* room above the kicker for the pause toggle in the corner */
   .chart-screen { height: auto; min-height: 0; margin: 10px; padding: 14px; grid-template-rows: auto auto auto; }
-  .motion-toggle { position: static; align-self: flex-end; }
   .chart-row { position: static; }
   .chart-wrap, .chart { height: auto; }
   .chart svg { height: auto; }

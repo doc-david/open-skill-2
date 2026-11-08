@@ -32,10 +32,11 @@ function showView(route) {
   updateContours();
 }
 
-// a screen's arrival class comes off when it lands, and so does the scroll guard
+// a screen's arrival class comes off when it lands, and so does the scroll guard. on the map it's the
+// content that arrives, never the ground under it
 views.addEventListener("animationend", event => {
-  if (event.target.matches(".view") && event.animationName !== "fade-in") {
-    event.target.classList.remove("view-in", "chart-from-right", "chart-from-left");
+  if (event.target.matches(".view, .map-inner") && event.animationName !== "fade-in") {
+    event.target.closest(".view").classList.remove("view-in", "chart-from-right", "chart-from-left");
     views.classList.remove("settling");
   }
 });
@@ -157,8 +158,11 @@ const motionToggle = document.getElementById("motion-toggle");
 let contoursPaused = false;
 try { contoursPaused = localStorage.getItem("map-motion") === "paused"; } catch (error) { /* storage blocked: start moving */ }
 
+// a toggle: its name stays "Pause motion" and its pressed state says whether the motion is paused;
+// the icon shows what a press will do next
 function labelMotionToggle() {
-  motionToggle.querySelector(".motion-label").textContent = contoursPaused ? "Play motion" : "Pause motion";
+  motionToggle.setAttribute("aria-pressed", String(contoursPaused));
+  motionToggle.title = contoursPaused ? "Play motion" : "Pause motion";
   motionToggle.querySelector(".pause-icon").hidden = contoursPaused;
   motionToggle.querySelector(".play-icon").hidden = !contoursPaused;
 }
@@ -176,6 +180,7 @@ function updateContours() {
   const moving = onMap && !document.hidden && !reduceMotionQuery.matches && !contoursPaused;
   if (moving && contourFrame === null) {
     lastFrame = null;
+    drawContours(contourClock);
     contourFrame = requestAnimationFrame(flowContours);
   }
   if (!moving && contourFrame !== null) {
@@ -229,7 +234,8 @@ function animateView(from, to) {
   if (from !== 0 && to !== 0) {
     view.classList.add(to > from ? "chart-from-right" : "chart-from-left");
   } else {
-    view.style.transformOrigin = stopOrigin[from || to];
+    // on the map, the content grows from the stop and the ground stays put, so it's never half there
+    (to === 0 ? view.querySelector(".map-inner") : view).style.transformOrigin = stopOrigin[from || to];
     view.classList.add("view-in");
   }
 }

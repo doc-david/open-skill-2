@@ -678,8 +678,8 @@ def run_checks(args, url, errors):
             return [stops, letters.length, new Set(letters).size, ground.tagName, getComputedStyle(ground).animationName,
                     css('.view-map.intro .stop').animationTimingFunction.includes('linear('), css('.view-map.intro h1 .letter').animationTimingFunction.includes('linear(')];
         }""")
-        check("the map's first load fades the contours in, pops the title's letters and springs the stops up 80ms apart",
-              intro[0] == ["fade-in, stop-in 0.24s", "fade-in, stop-in 0.32s", "fade-in, stop-in 0.4s"] and intro[1] == 14 and intro[2] == 1 and intro[3] == "CANVAS" and intro[4] == "fade-in" and intro[5] and intro[6], intro)
+        check("the map's first load pops the title's letters and springs the stops up 80ms apart, over contours that are there from the start",
+              intro[0] == ["fade-in, stop-in 0.24s", "fade-in, stop-in 0.32s", "fade-in, stop-in 0.4s"] and intro[1] == 14 and intro[2] == 1 and intro[3] == "CANVAS" and intro[4] == "none" and intro[5] and intro[6], intro)
         # the ground's contours flow without end while the map shows, cheaply, and stop on a chart
         frames = "document.querySelector('.contours').frames"
         f0 = moving.evaluate(frames)
@@ -700,8 +700,12 @@ def run_checks(args, url, errors):
         check("the contours stop while a chart shows", moving.evaluate(frames) == g0, (g0, moving.evaluate(frames)))
         slid = [step(".hud-dots a[href='#chart-1']", "document.getElementById('chart1').className"), step(".hud-dots a[href='#chart-2']", "document.getElementById('chart2').className")]
         check("chart to chart slides the way you moved", "chart-from-left" in slid[0] and "chart-from-right" in slid[1], slid)
-        later = step("#hud-back", "[document.querySelectorAll('.intro').length, document.getElementById('view-map').classList.contains('view-in'), document.getElementById('view-map').style.transformOrigin]")
-        check("the map's intro doesn't play again on later visits", later == [0, True, "50% 64%"], later)
+        later = step("#hud-back", """[document.querySelectorAll('.intro').length, document.getElementById('view-map').classList.contains('view-in'), document.querySelector('.map-inner').style.transformOrigin,
+            getComputedStyle(document.getElementById('view-map')).opacity, getComputedStyle(document.getElementById('view-map')).transform, getComputedStyle(document.querySelector('.map-ground')).opacity,
+            getComputedStyle(document.querySelector('.map-inner')).animationName, getComputedStyle(document.querySelector('.views')).backgroundColor, document.querySelector('.contours').getContext('2d').getImageData(0, 0, 400, 300).data.some((v, i) => i % 4 === 3 && v > 40)]""")
+        check("the map's intro doesn't play again on later visits", later[:3] == [0, True, "50% 64%"], later[:3])
+        check("going back to the map, the ground and its lines are whole from the first frame; only the content grows from the stop",
+              later[3:] == ["1", "none", "1", "fade-in, grow-in", "rgb(24, 50, 42)", True], later[3:])
         moving.wait_for_timeout(900)
         moving.hover(".stop[data-chart='1']")
         moving.wait_for_timeout(800)
@@ -756,16 +760,21 @@ def run_checks(args, url, errors):
         frames_now = "document.querySelector('.contours').frames"
         bg.click("#motion-toggle")
         p0 = bg.evaluate(frames_now); bg.wait_for_timeout(400); p1 = bg.evaluate(frames_now)
-        paused = [p0 == p1, bg.text_content("#motion-toggle").strip(), bg.evaluate("[document.querySelector('.play-icon').hidden, document.querySelector('.pause-icon').hidden]")]
+        pressed = "document.getElementById('motion-toggle').getAttribute('aria-pressed')"
+        paused = [p0 == p1, bg.evaluate(pressed), bg.evaluate("[document.querySelector('.play-icon').hidden, document.querySelector('.pause-icon').hidden]")]
         bg.reload(wait_until="networkidle")
         bg.wait_for_timeout(300)
         r0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
-        remembered = [bg.evaluate(frames_now) == r0, bg.text_content("#motion-toggle").strip()]
+        remembered = [bg.evaluate(frames_now) == r0, bg.evaluate(pressed)]
         bg.click("#motion-toggle")
         q0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
-        resumed = [bg.evaluate(frames_now) - q0 > 10, bg.text_content("#motion-toggle").strip()]
+        resumed = [bg.evaluate(frames_now) - q0 > 10, bg.evaluate(pressed)]
         check("the pause button stops the map's motion where it is, is remembered, and starts it again",
-              paused == [True, "Play motion", [False, True]] and remembered == [True, "Play motion"] and resumed == [True, "Pause motion"], (paused, remembered, resumed))
+              paused == [True, "true", [False, True]] and remembered == [True, "true"] and resumed == [True, "false"], (paused, remembered, resumed))
+        toggle = bg.evaluate("""() => { const t = document.getElementById('motion-toggle'), r = t.getBoundingClientRect(), g = document.querySelector('.map-ground').getBoundingClientRect();
+            return [t.getAttribute('aria-label'), Math.round(r.width), Math.round(g.right - r.right), Math.round(r.top - g.top), t.textContent.trim()]; }""")
+        named_toggle = bg.get_by_role("button", name="Pause motion", exact=True).count()
+        check("pause is a small toggle in the corner, named Pause motion for screen readers", toggle[0] == "Pause motion" and toggle[1] <= 40 and toggle[2] <= 20 and toggle[3] <= 20 and toggle[4] == "" and named_toggle == 1, (toggle, named_toggle))
         clear = []
         for size in ((1920, 945), (1280, 585), (390, 844)):
             bg.set_viewport_size({"width": size[0], "height": size[1]})

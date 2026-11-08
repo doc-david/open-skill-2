@@ -41,12 +41,11 @@
       <div class="view view-map" id="view-map">
         <div class="map-ground">
           <canvas class="contours" aria-hidden="true"></canvas>
+          <button type="button" class="motion-toggle" id="motion-toggle" aria-label="Pause motion" aria-pressed="false" title="Pause motion">
+            <svg class="motion-icon pause-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="3.5" height="11" rx="1"/><rect x="9.5" y="2.5" width="3.5" height="11" rx="1"/></svg>
+            <svg class="motion-icon play-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" hidden><path d="M4.5 2.5v11l9-5.5z"/></svg>
+          </button>
           <div class="map-inner">
-            <button type="button" class="button motion-toggle" id="motion-toggle">
-              <svg class="motion-icon pause-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="3.5" height="11" rx="1"/><rect x="9.5" y="2.5" width="3.5" height="11" rx="1"/></svg>
-              <svg class="motion-icon play-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" hidden><path d="M4 2.5v11l9.5-5.5z"/></svg>
-              <span class="motion-label">Pause motion</span>
-            </button>
             <header class="masthead">
               <p class="kicker">A field guide to <span id="country-count"></span> countries</p>
               <h1 tabindex="-1">World Happiness</h1>
