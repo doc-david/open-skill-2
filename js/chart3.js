@@ -9,15 +9,15 @@ function chart3(data, continents) {
   const x = d3.scaleLinear().domain([0, 10]).range([328, 1608]);
   const ticks = [0, 2, 4, 6, 8, 10];
 
-  // legend label, tooltip title and pigment for each factor, in the stack's left-to-right order
+  // label (the legend's and the tooltip's) and pigment for each factor, in the stack's left-to-right order
   const factors = {
-    "GDP per Capita": { label: "GDP per capita", title: "Explained by GDP per capita", color: token("color-factor-gdp") },
-    "Social Support": { label: "Social support", title: "Explained by social support", color: token("color-factor-social") },
-    "Life Expectancy": { label: "Life expectancy", title: "Explained by life expectancy", color: token("color-factor-life") },
-    "Freedom": { label: "Freedom", title: "Explained by freedom", color: token("color-factor-freedom") },
-    "Generosity": { label: "Generosity", title: "Explained by generosity", color: token("color-factor-generosity") },
-    "Corruption": { label: "Perceptions of corruption", title: "Explained by perceptions of corruption", color: token("color-factor-corruption") },
-    "Unexplained": { label: "Unexplained remainder", title: "Unexplained remainder", color: token("color-factor-unexplained") }
+    "GDP per Capita": { label: "GDP per capita", color: token("color-factor-gdp") },
+    "Social Support": { label: "Social support", color: token("color-factor-social") },
+    "Life Expectancy": { label: "Life expectancy", color: token("color-factor-life") },
+    "Freedom": { label: "Freedom", color: token("color-factor-freedom") },
+    "Generosity": { label: "Generosity", color: token("color-factor-generosity") },
+    "Corruption": { label: "Perceptions of corruption", color: token("color-factor-corruption") },
+    "Unexplained": { label: "Unexplained remainder", color: token("color-factor-unexplained") }
   };
 
   const legend = d3.select("#chart3 .legend").selectAll("li").data(stack.factor_order).join("li");
@@ -97,7 +97,7 @@ function chart3(data, continents) {
   segments
     .on("pointerenter", function (event, s) {
       activate(this);
-      showTooltip(event, factors[s.name].title, [`${formatScore(s.value)} of ${formatScore(s.score)} points · ${s.country}`]);
+      showTooltip(event, factors[s.name].label, [`${formatScore(s.value)} of ${formatScore(s.score)} points · ${s.country}`]);
     })
     .on("pointermove", moveTooltip)
     .on("pointerleave", () => { activate(null); hideTooltip(); returnToFocus(svg.node()); });

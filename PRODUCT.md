@@ -10,11 +10,11 @@ web
 
 ## Users
 
-Professor Peck and the INFO 4602 class, who grade it; viewers of David's 3-minute video; later, portfolio visitors.
+People exploring the World Happiness surveys. David (Nov 7): treat it as a user-friendly website, not a project submission. Professor Peck, the class and viewers of David's video see the same page; the course context is in the README, the video and the reflection.
 
 ## Product Purpose
 
-Show learning a grader can see: D3.js, used to rebuild Open Skill 1's three Figma dashboards with the interactions Figma couldn't do (cursor-following tooltips, hovering any grey line, one continent filter linking all three charts, an animated risers/decliners toggle). Make it fun to explore: a field guide to the survey's countries, one screen at a time, entered from a trail map, without changing what the charts are.
+Let people explore the surveys through three charts, with tooltips that follow the cursor, every country's line to hover, one continent filter linking all three charts and an animated risers/decliners toggle. For the course, this is D3.js rebuilding Open Skill 1's Figma dashboards, but the page doesn't say so. Make it fun to explore: a field guide to the survey's countries, one screen at a time, entered from a trail map, without changing what the charts are.
 
 ## Capabilities and Constraints
 

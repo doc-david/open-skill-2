@@ -141,23 +141,14 @@ def run_checks(args, url, errors):
         check("no template or NaN text", not any(t in text for t in ["{", "}", "NaN", "undefined", "null"]))
 
         open_view(page, "map")
-        # figma vs d3: every still loads, has alt text, and each pair shows the same chart region
-        page.eval_on_selector_all(".compare img", "imgs => imgs.forEach(i => { i.loading = 'eager'; })")
-        page.wait_for_function("[...document.querySelectorAll('.compare img')].every(i => i.complete && i.naturalWidth > 0)")
-        stills = page.eval_on_selector_all(".compare img", "imgs => imgs.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth, alt: i.alt }))")
-        figma = [s for s in stills if "/figma/" in s["src"]]
-        d3s = [s for s in stills if "/d3/" in s["src"]]
-        check("figma frames load at 1920px", len(figma) == 3 and all(s["w"] == 1920 for s in figma), figma)
-        check("d3 stills load at figma's scale", len(d3s) == 3 and all(s["w"] == 1760 for s in d3s), d3s)
-        check("every comparison image has alt text", all(s["alt"] for s in stills), stills)
-        sizes = page.eval_on_selector_all(".pair", "pairs => pairs.map(p => [...p.querySelectorAll('.shot')].map(s => { const b = s.getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; }))")
-        check("each figma and d3 pair is the same size", len(sizes) == 3 and all(a == b for a, b in sizes), sizes)
-        crops = page.eval_on_selector_all(".shot-figma", """shots => shots.map((s, i) => {
-            const [vx, vy, vw] = document.querySelector(`#chart${i + 1} svg`).getAttribute('viewBox').split(' ').map(Number);
-            const box = s.getBoundingClientRect(), im = s.querySelector('img'), img = im.getBoundingClientRect(), k = box.width / vw;
-            return [img.left - box.left + vx * k, img.top - box.top + vy * k, im.getAttribute('src').includes(`chart${i + 1}-`)];
-        })""")
-        check("each figma crop shows its chart's viewbox", len(crops) == 3 and all(abs(x) < 0.5 and abs(y) < 0.5 and own for x, y, own in crops), crops)
+        # a site for visitors, not a project submission (david, nov 7): no figma vs d3 section,
+        # colophon, eyebrow, project paragraph or meta description, and a plain title
+        leftovers = page.evaluate("""(() => {
+            const gone = ['#compare', '.colophon', '.eyebrow', '.lede', '.below-fold', 'meta[name=description]'].filter(q => document.querySelector(q));
+            const words = ['Figma', 'Open Skill', 'INFO 4602', 'rebuilt', 'D3'].filter(w => document.body.textContent.includes(w));
+            return [gone, words, document.querySelector('h1').textContent];
+        })()""")
+        check("the page carries no project text", leftovers == [[], [], "World Happiness"], leftovers)
 
         # data tables: every cell equals this script's own rounding of chart-data.json
         def table(chart):
@@ -213,6 +204,15 @@ def run_checks(args, url, errors):
         if args.shots:
             page.screenshot(path=f"{args.shots}/plate-2-hover.png")
         page.mouse.move(5, 5)
+
+        # chart 3's tooltip names the factor the way the legend does (david, nov 7: no "explained by")
+        open_view(page, "plate-3")
+        page.hover("#chart3 .row .segment")
+        tip3 = page.inner_text(".tooltip").split("\n")
+        legend = page.eval_on_selector_all("#chart3 .legend li", "l => l.map(x => x.textContent.trim())")
+        check("chart 3 tooltip names the factor as the legend does", tip3[0] == "GDP per capita" and tip3[0] in legend and " points · " in tip3[1], (tip3, legend))
+        page.mouse.move(5, 5)
+        open_view(page, "plate-2")
 
         # interaction 3: the toggle swaps which five lines are forest
         page.click("#view-decliners")
@@ -291,8 +291,9 @@ def run_checks(args, url, errors):
         roles = page.eval_on_selector_all("#chart1 .row, #chart2 .label, #chart3 .row", "e => e.filter(x => x.getAttribute('role') !== 'img' || !x.getAttribute('aria-label')).length")
         check("rows and labels have a role and a name", roles == 0, roles)
 
-        # the scroll keys reach the view from the bare page and from the hud, and arrows stay with a chip
-        scroller = browser.new_page(viewport={"width": 1280, "height": 720})
+        # in a window too short for the map, the scroll keys reach the view from the bare page and
+        # from the hud, arrows stay with a chip, and the hud stays put while the view scrolls
+        scroller = browser.new_page(viewport={"width": 1280, "height": 400})
         scroller.goto(url, wait_until="networkidle")
         scroller.wait_for_selector("#chart3 .segment", state="attached")
         at = "document.querySelector('.views').scrollTop"
@@ -311,7 +312,9 @@ def run_checks(args, url, errors):
         arrow_chip = scroller.evaluate(at)
         scroller.keyboard.press("End")
         end = scroller.evaluate("(() => { const v = document.querySelector('.views'); return Math.abs(v.scrollTop + v.clientHeight - v.scrollHeight) < 2; })()")
-        check("the scroll keys reach the view from the page and the hud", from_page > 400 and home == 0 and arrow > 0 and from_chip > 400 and arrow_chip == 0 and end, (from_page, home, arrow, from_chip, arrow_chip, end))
+        check("the scroll keys reach the view from the page and the hud", from_page > 50 and home == 0 and arrow > 0 and from_chip > 50 and arrow_chip == 0 and end, (from_page, home, arrow, from_chip, arrow_chip, end))
+        held = scroller.evaluate("[document.querySelector('.hud').getBoundingClientRect().top, window.scrollY, document.querySelector('.views').scrollTop > 0]")
+        check("the hud stays put while the map scrolls under it", held[0] == 0 and held[1] == 0 and held[2], held)
         scroller.close()
 
         # the data table's button never covers the source line, even with text spacing turned up
@@ -322,14 +325,6 @@ def run_checks(args, url, errors):
         clear = spacing.evaluate("document.querySelector('#chart1 summary').getBoundingClientRect().right <= document.querySelector('#chart1 .panel-foot span').getBoundingClientRect().left")
         check("the data table button clears the source line at wide text spacing", clear, clear)
         spacing.close()
-
-        # the hud stays put while a view scrolls under it, and the page itself never scrolls
-        open_view(page, "map")
-        page.evaluate("document.querySelector('.views').scrollTop = 900")
-        page.wait_for_timeout(100)
-        held = page.evaluate("[document.querySelector('.hud').getBoundingClientRect().top, window.scrollY, document.querySelector('.views').scrollTop > 0]")
-        check("the hud stays put while the map scrolls under it", held[0] == 0 and held[1] == 0 and held[2], held)
-        page.evaluate("document.querySelector('.views').scrollTop = 0")
 
         # phone width: the page itself never scrolls sideways
         page.set_viewport_size({"width": 390, "height": 844})

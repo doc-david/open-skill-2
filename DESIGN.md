@@ -1,5 +1,5 @@
 ---
-name: World Happiness, rebuilt in D3
+name: World Happiness
 description: A field guide to the World Happiness surveys, entered from a trail map, one plate at a time.
 colors:
   forest: "#18322a"
@@ -11,7 +11,6 @@ colors:
   highlighter: "#f2c14e"
   on-forest: "#f2f5ec"
   on-forest-secondary: "#b9c8b0"
-  on-forest-lede: "#d7e1cf"
   contour: "#2c4d40"
   chip-border: "#5f7a6a"
   icon-band: "#eef2e6"
@@ -106,16 +105,15 @@ A printed field guide you can walk through. Home is a trail map on a forest grou
 ## Typography
 
 - National Park for display: the H1, plate titles, stop titles, markers and stamps.
-- Source Serif 4 for reading: the lede, deks, notes, captions and colophon.
+- Source Serif 4 for reading: deks and notes.
 - IBM Plex Sans Condensed for UI, tooltips, tables and every chart label, with tabular numerals. The widest country name takes 121.6 of the name column's 168 units at 24px.
-- The system monospace stack for the two code terms in the colophon, and nowhere else.
 
 ## Layout
 
 - One root fills the window: the HUD on top, one view under it. Only the view scrolls.
 - A plate's rows are header, `minmax(0, 1fr)` chart, footer. The SVG is 100% by 100% and keeps its viewBox, so it scales without changing geometry.
 - The map and each plate fit one screen from 1280x720 to 1920x1080. Below that height the view scrolls.
-- Figma vs D3 and the colophon sit on the map, below the fold.
+- The map is the kicker, the title and the three stops, nothing else. It's a site for visitors, not a project submission (David, Nov 7), so the course context lives in the README, not on the page.
 - At 640px and under, views stack in normal page flow and wide charts scroll inside their box. A designed phone layout is out of scope.
 
 ## Elevation & Depth

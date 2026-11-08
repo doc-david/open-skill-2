@@ -120,7 +120,7 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   .hud .button:hover { background: var(--color-contour); }
 }
 
-/* the map: the home view. forest ground with contour lines, then figma vs d3 and the colophon below the fold */
+/* the map: the home view. forest ground with contour lines */
 .contours {
   position: absolute;
   inset: 0;
@@ -155,12 +155,6 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   gap: clamp(20px, 4vh, 40px);
 }
 .masthead { display: grid; }
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-on-forest-secondary);
-}
 .kicker {
   margin: 0 0 8px;
   font-family: var(--font-display);
@@ -177,15 +171,6 @@ h1 {
   font-weight: 800;
   letter-spacing: 0.005em;
   text-wrap: balance;
-}
-.lede {
-  margin: 0;
-  max-width: 68ch; /* source serif fits about 1.15 characters per ch, so about 78 characters */
-  font-family: var(--font-reading);
-  font-size: clamp(16px, 1.45vw, 19px);
-  line-height: 1.5;
-  text-wrap: pretty;
-  color: var(--color-on-forest-lede);
 }
 
 /* the three stops */
@@ -273,17 +258,6 @@ h1 {
 .stop-title { font-family: var(--font-display); font-size: 21px; font-weight: 800; line-height: 1.15; text-wrap: balance; }
 .stop-dek { font-family: var(--font-reading); font-size: 15px; line-height: 1.4; color: var(--color-text-secondary); }
 
-.below-fold {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-  max-width: 1240px;
-  margin-inline: auto;
-  padding-block: 32px 64px;
-  padding-left: max(20px, env(safe-area-inset-left, 0px));
-  padding-right: max(20px, env(safe-area-inset-right, 0px));
-}
-
 /* continent filter: one group in the hud, so it reaches every view */
 .filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
 .filter-label { font-size: 14px; font-weight: 600; color: var(--color-on-forest-secondary); flex: none; }
@@ -323,7 +297,7 @@ h1 {
   .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-on-forest-primary); }
 }
 
-/* panels: figma vs d3 on the map, and the plates */
+/* panels: the plates */
 .panel {
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-text-primary);
@@ -530,45 +504,6 @@ h2 {
 }
 .empty.on { opacity: 1; }
 
-/* figma vs d3: each pair is cropped to the same chart region, so the two line up point for point */
-.compare { gap: 40px; }
-.pair { display: grid; gap: 14px; min-width: 0; }
-.pair h3 { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 1.25; font-weight: 600; }
-.pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.pair figure { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
-.pair figcaption { font-family: var(--font-reading); font-size: 15px; line-height: 1.5; color: var(--color-text-secondary); max-width: 52ch; text-wrap: pretty; }
-.pair figcaption strong { color: var(--color-text-primary); font-weight: 700; }
-.shot {
-  position: relative;
-  aspect-ratio: 1760 / var(--h);
-  overflow: hidden;
-  border-radius: 3px;
-  background: var(--color-bg-primary);
-  box-shadow: 0 0 0 1px var(--color-line-grid);
-}
-.shot img { display: block; width: 100%; height: auto; }
-/* the figma image is the whole 1920x1080 slide; this crops it to the chart's viewbox */
-.shot-figma img {
-  position: absolute;
-  max-width: none;
-  width: calc(1920 / 1760 * 100%);
-  left: calc(-80 / 1760 * 100%);
-  top: calc(var(--y) / var(--h) * -100%);
-}
-
-.colophon {
-  display: grid;
-  gap: 10px;
-  max-width: 72ch;
-  padding-top: 8px;
-  font-family: var(--font-reading);
-  font-size: 15px;
-  color: var(--color-text-secondary);
-}
-.colophon p { margin: 0; text-wrap: pretty; }
-.colophon strong { color: var(--color-text-primary); font-weight: 700; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
-
 .error {
   margin: 0;
   padding: 24px;
@@ -694,5 +629,4 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   .data-table summary { position: static; margin-top: 10px; }
   .table-scroll { position: static; margin-top: 8px; max-height: 440px; }
   .panel-foot { padding-left: 0; }
-  .pair-grid { grid-template-columns: minmax(0, 1fr); }
 }
