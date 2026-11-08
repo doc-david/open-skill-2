@@ -19,6 +19,7 @@ The three World Happiness dashboards from Open Skill 1 were first built in Figma
 - `css/tokens.css`: generated from `scripts/figma-variables.json` by `scripts/figma_tokens.py`. Type sizes and spacing come from the Figma file's variables; the colors and fonts are the Field Guide look David picked, not yet added to the Figma file
 - `js/`: one D3 module per chart (`chart1.js`, `chart2.js`, `chart3.js`), plus `views.js` (the map and chart screens), `tables.js`, `tooltip.js`, `format.js` (Open Skill 1's rounding rules), `theme.js` and `main.js`
 - `scripts/check_page.py`: headless-browser checks that compare every drawn label, bar and interaction with the data
+- `scripts/springs.py`: the spring curves the motion uses, as CSS `linear()` easing
 
 ## Run it locally
 ```

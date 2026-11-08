@@ -11,7 +11,18 @@ let tooltipAnchor = null;
 // .text() sets textContent, so a country name can never be read as html
 function fillTooltip(title, lines) {
   tooltipTitle.text(title);
-  tooltipLines.selectAll("div").data(lines).join("div").text(d => d);
+  // a line is plain text, or a row of label and value, set out like a small table
+  const rows = lines.some(d => typeof d === "object");
+  tooltipLines.classed("rows", rows);
+  tooltipLines.selectAll("div").data(lines).join("div")
+    .attr("class", d => d.current ? "current" : null)
+    .each(function (d) {
+      const line = d3.select(this).text(rows ? null : d);
+      if (rows) {
+        line.append("span").text(d.label);
+        line.append("span").attr("class", "value").text(d.value);
+      }
+    });
 }
 
 // show the tooltip next to the pointer
@@ -28,6 +39,10 @@ function moveTooltip(event) {
 
 // keyboard focus has no pointer, so the tooltip sits beside the focused mark instead
 function showTooltipAt(element, title, lines) {
+  // keyboard focus finishes whatever is still arriving on its screen, so the tooltip sits beside the
+  // mark where it ends up, not where it is halfway through growing
+  element.closest(".view")?.getAnimations({ subtree: true })
+    .filter(a => a.effect.getTiming().iterations !== Infinity).forEach(a => a.finish());
   tooltipAnchor = element;
   fillTooltip(title, lines);
   placeAtAnchor();

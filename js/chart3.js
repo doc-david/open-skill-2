@@ -80,6 +80,7 @@ function chart3(data, continents) {
   // a nested data join: each row's data is its 7 segments. the paper-colored stroke draws the 2px gaps
   const segments = row.selectAll(".segment").data(d => d.segments).join("path")
     .attr("class", "segment")
+    .style("transform-origin", `${x(0)}px 0`)
     .attr("fill", s => factors[s.name].color)
     .attr("stroke", colors.paper).attr("stroke-width", 2)
     .attr("d", s => barPath(x(s.start), s.top + 12, x(s.start + s.value) - x(s.start), 48, s.last ? 4 : 0));
@@ -119,7 +120,15 @@ function chart3(data, continents) {
     ...stack.factor_order.map((name, j) => ({ label: factors[name].label, value: d => formatScore(d.segments[j].value), numeric: true }))
   ], rows);
 
+  // which row a segment belongs to, for the entrance's order
+  const order = new Map(rows.map((d, i) => [d.country, i]));
+
   return {
+    // each row's stack grows out of the zero line as one bar, a row at a time, then its score settles in
+    enter() {
+      enter(segments, { scale: "0 1" }, s => ({ duration: 550, easing: easing.out, delay: 100 + 70 * order.get(s.country) }));
+      enter(row.select(".halo"), { opacity: 0, translate: "-10px 0" }, (d, i) => ({ ...easing.quick, delay: 480 + 70 * i }));
+    },
     filter(continent) {
       const included = d => continent === "All" || d.continent === continent;
       row.transition().duration(motion.duration).ease(motion.ease)

@@ -7,7 +7,25 @@
      strong ease-in-out for things moving on screen */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* springs, from scripts/springs.py: how long each takes to settle, and its curve. a browser without
+     css linear() gets the strong ease-out instead, with no bounce */
+  --spring-bouncy: var(--ease-out);
+  --spring-quick: var(--ease-out);
+  --spring-view: var(--ease-out);
+  --spring-pop: var(--ease-out);
+  --spring-bouncy-time: 820ms; /* duration 0.5, bounce 0.3, overshoot 4.6% */
+  --spring-quick-time: 580ms; /* duration 0.35, bounce 0.3, overshoot 4.6% */
+  --spring-view-time: 610ms; /* duration 0.45, bounce 0.2, overshoot 1.5% */
+  --spring-pop-time: 1010ms; /* duration 0.5, bounce 0.45, overshoot 12.6% */
   --panel-radius: 4px;
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring-bouncy: linear(0, 0.0294, 0.1036, 0.2051, 0.3198, 0.4375, 0.5508, 0.6546, 0.7461, 0.824, 0.8881, 0.9389, 0.9778, 1.0061, 1.0255, 1.0376, 1.044, 1.046, 1.0448, 1.0415, 1.0369, 1.0317, 1.0263, 1.021, 1.0162, 1.012, 1.0083, 1.0054, 1.003, 1.0011, 0.9998, 0.9989, 0.9983, 0.998, 0.9979, 0.9979, 0.9981, 0.9983, 0.9985, 0.9988, 1);
+    --spring-quick: linear(0, 0.0299, 0.1055, 0.2085, 0.3248, 0.4436, 0.5576, 0.6617, 0.7532, 0.8306, 0.894, 0.944, 0.9819, 1.0092, 1.0277, 1.039, 1.0446, 1.046, 1.0443, 1.0407, 1.0359, 1.0305, 1.025, 1.0198, 1.0151, 1.011, 1.0075, 1.0046, 1.0024, 1.0007, 0.9995, 0.9987, 0.9982, 0.9979, 0.9979, 0.998, 0.9981, 0.9984, 0.9986, 0.9989, 1);
+    --spring-view: linear(0, 0.0202, 0.0721, 0.1445, 0.2288, 0.3183, 0.408, 0.4945, 0.5753, 0.6491, 0.715, 0.7728, 0.8226, 0.8648, 0.9, 0.9289, 0.9521, 0.9705, 0.9847, 0.9954, 1.0032, 1.0086, 1.0121, 1.0141, 1.015, 1.0151, 1.0146, 1.0137, 1.0125, 1.0111, 1.0098, 1.0084, 1.0072, 1.006, 1.0049, 1.0039, 1.0031, 1.0024, 1.0018, 1.0013, 1);
+    --spring-pop: linear(0, 0.0446, 0.1566, 0.3066, 0.4709, 0.6314, 0.7757, 0.8963, 0.9902, 1.0572, 1.0997, 1.1212, 1.1262, 1.1191, 1.104, 1.0846, 1.0638, 1.0438, 1.0259, 1.0112, 0.9998, 0.9918, 0.9869, 0.9845, 0.9841, 0.9852, 0.9872, 0.9897, 0.9923, 0.9948, 0.997, 0.9988, 1.0002, 1.0011, 1.0017, 1.002, 1.002, 1.0018, 1.0016, 1.0013, 1);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -35,6 +53,8 @@ body {
   grid-template-rows: auto minmax(0, 1fr);
 }
 .views {
+  /* always the second row, so it still fills the window when the map hides the hud */
+  grid-row: 2;
   position: relative;
   min-height: 0;
   overflow-x: hidden;
@@ -46,6 +66,9 @@ body {
 h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
 
 /* the hud: a forest bar on every view */
+.hud[hidden] { display: none; }
+/* views.js lays a hidden chart screen out once, invisibly, so its first opening doesn't stall */
+.chart-screen.prewarm[hidden] { display: grid; visibility: hidden; position: fixed; inset: 61px 0 0 0; pointer-events: none; }
 .hud {
   display: flex;
   flex-wrap: wrap;
@@ -126,10 +149,7 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   inset: 0;
   width: 100%;
   height: 100%;
-  fill: none;
-  stroke: var(--color-contour);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
+  color: var(--color-contour); /* views.js draws the rings in this color */
   pointer-events: none;
 }
 .view-map { height: 100%; }
@@ -137,7 +157,9 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   position: relative;
   display: flex;
   min-height: 100%;
+  /* clip, not hidden: nothing on the map can be scrolled to, not even by focus */
   overflow: hidden;
+  overflow: clip;
   background: var(--color-hud);
   color: var(--color-on-forest-primary);
 }
@@ -155,6 +177,8 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   gap: clamp(20px, 4vh, 40px);
 }
 .masthead { display: grid; }
+h1 .word { display: inline-block; white-space: nowrap; }
+h1 .letter { display: inline-block; }
 .kicker {
   margin: 0 0 8px;
   font-family: var(--font-display);
@@ -180,13 +204,6 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(16px, 3vw, 40px);
 }
-.trail-line {
-  position: absolute;
-  top: 28px;
-  left: 16.66%;
-  right: 16.66%;
-  border-top: 3px dashed var(--color-highlighter);
-}
 .stop {
   position: relative;
   display: flex;
@@ -196,9 +213,21 @@ h1 {
   color: var(--color-text-primary);
   border: 1.5px solid var(--color-hud-edge);
   border-radius: 4px;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   text-decoration: none;
+  isolation: isolate;
 }
+/* the stop's shadow and its deeper hover shadow are layers of their own, so lifting a stop only fades
+   their opacity, which the gpu does, instead of repainting the card every frame */
+.stop::before, .stop::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 4px;
+  z-index: -1;
+  pointer-events: none;
+}
+.stop::before { box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3); }
+.stop::after { box-shadow: 6px 10px 0 rgba(0, 0, 0, 0.32); opacity: 0; }
 .stop-marker {
   position: absolute;
   top: -28px;
@@ -250,7 +279,7 @@ h1 {
   background: transparent;
   color: var(--color-on-forest-primary);
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms var(--ease-out);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 .chips button[aria-pressed="true"] {
   background: var(--color-highlighter);
@@ -267,7 +296,6 @@ h1 {
   visibility: hidden;
   font-weight: 600;
 }
-.chips button:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
   .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-on-forest-primary); }
 }
@@ -288,7 +316,8 @@ h1 {
    on a short window it keeps a usable height and the view scrolls instead */
 .chart-screen {
   height: calc(100% - 32px);
-  min-height: 500px;
+  /* low enough that a 1080p screen at 150% scaling (a window about 1280x585) never scrolls (david, nov 7) */
+  min-height: 440px;
   margin: 14px 20px 18px;
   padding: 16px 20px;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -357,10 +386,8 @@ h2 {
   color: var(--color-text-primary);
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 120ms var(--ease-out);
 }
 .segmented button[aria-pressed="true"] { font-weight: 600; }
-.segmented button:active { transform: scale(0.97); }
 /* an invisible bold copy of the label reserves the width, so the control doesn't resize on click */
 .segmented button::after {
   content: attr(data-label);
@@ -539,32 +566,75 @@ h2 {
 .tooltip-title { font-size: 15px; font-weight: 700; line-height: 1.35; color: var(--color-text-primary); }
 .tooltip-lines { margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
 .tooltip-lines div:first-child { color: var(--color-text-primary); font-weight: 600; }
+/* a tooltip of label and value rows reads like a small table: the values line up on the right */
+.tooltip-lines.rows { display: grid; grid-template-columns: auto auto; column-gap: 20px; margin-top: 4px; }
+.tooltip-lines.rows div { display: contents; }
+.tooltip-lines.rows .value { text-align: right; }
+.tooltip-lines.rows .current { color: var(--color-text-primary); font-weight: 600; }
 
 :focus-visible { outline: 2px solid var(--color-data-focus); outline-offset: 2px; }
 .table-scroll:focus-visible { outline-offset: 0; }
 
-/* screens and stops. everything here is inside no-preference, so reduced motion gets no transforms.
-   these fill backwards only, so a hover's transform still works once they've finished */
+/* motion. the springs bounce on the playful moments and settle calmly on whole screens. data marks
+   never bounce (theme.js). everything here is inside no-preference, so reduced motion gets no
+   transforms, and the entrances fill backwards only, so a hover's transform works once they finish */
 @media (prefers-reduced-motion: no-preference) {
-  .stop { transition: transform 160ms var(--ease-out), box-shadow 160ms ease; }
-  .stop:active { transform: scale(0.98); }
-  .button { transition: transform 120ms var(--ease-out), background-color 160ms ease; }
-  .button:active { transform: scale(0.97); }
-  .view-in { animation: view-in 220ms var(--ease-out) backwards; }
-  .chart-from-right { animation: from-right 220ms var(--ease-out) backwards; }
-  .chart-from-left { animation: from-left 220ms var(--ease-out) backwards; }
-  .stop.intro { animation: stop-in 300ms var(--ease-out) backwards; }
-  .stop.intro[data-chart="2"] { animation-delay: 60ms; }
-  .stop.intro[data-chart="3"] { animation-delay: 120ms; }
+  /* a press squashes fast while held, then springs back when you let go */
+  .button, .chips button, .segmented button, .hud-dots span {
+    transition: transform var(--spring-quick-time) var(--spring-quick), background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+  .button:active, .chips button:active, .segmented button:active, .hud-dots a:active span {
+    transform: scale(0.95);
+    transition-duration: 100ms;
+    transition-timing-function: var(--ease-out);
+  }
+  .stop { transition: transform var(--spring-quick-time) var(--spring-quick); }
+  .stop::before, .stop::after { transition: opacity 160ms ease; }
+  .stop:active { transform: scale(0.97); transition-duration: 100ms; transition-timing-function: var(--ease-out); }
+  .stop-marker { transition: transform var(--spring-quick-time) var(--spring-quick); }
+  .segmented .thumb, .data-table summary::before { transition: transform var(--spring-quick-time) var(--spring-quick); }
+
+  /* screens: from the map, a chart grows out of its stop; chart to chart slides the way you moved */
+  .view-in { animation: fade-in 200ms var(--ease-out) backwards, grow-in var(--spring-view-time) var(--spring-view) backwards; }
+  .chart-from-right { animation: fade-in 200ms var(--ease-out) backwards, from-right var(--spring-view-time) var(--spring-view) backwards; }
+  .chart-from-left { animation: fade-in 200ms var(--ease-out) backwards, from-left var(--spring-view-time) var(--spring-view) backwards; }
+  .views.settling { overflow: hidden; }
+  /* the dot of the chart you're on pops as you arrive */
+  .hud-dots a[aria-current="page"] span { animation: pop-in var(--spring-bouncy-time) var(--spring-bouncy) backwards; }
+
+  /* the map's first load, after the title screen david gave as a reference: the contour rings ripple
+     out from their centers, the title pops in a letter at a time, the stops
+     spring up one by one, and their markers and icons pop. it plays once, only when the map is the
+     first thing you see */
+  .view-map.intro .contours { animation: fade-in 600ms var(--ease-out) backwards; }
+  .view-map.intro .kicker { animation: fade-in 240ms var(--ease-out) backwards, rise-in var(--spring-view-time) var(--spring-view) backwards; }
+  .view-map.intro h1 .letter { animation: fade-in 120ms var(--ease-out) backwards, pop-in var(--spring-pop-time) var(--spring-pop) backwards; animation-delay: calc(80ms + var(--letter) * 35ms); }
+  .view-map.intro .stop { animation: fade-in 240ms var(--ease-out) backwards, stop-in var(--spring-bouncy-time) var(--spring-bouncy) backwards; animation-delay: 240ms; }
+  .view-map.intro .stop[data-chart="2"] { animation-delay: 320ms; }
+  .view-map.intro .stop[data-chart="3"] { animation-delay: 400ms; }
+  .view-map.intro .stop-marker, .view-map.intro .stop-svg { animation: fade-in 160ms var(--ease-out) backwards, pop-in var(--spring-pop-time) var(--spring-pop) backwards; animation-delay: 520ms; }
+  .view-map.intro .stop-svg { animation-delay: 600ms; }
+  .view-map.intro .stop[data-chart="2"] .stop-marker { animation-delay: 600ms; }
+  .view-map.intro .stop[data-chart="2"] .stop-svg { animation-delay: 680ms; }
+  .view-map.intro .stop[data-chart="3"] .stop-marker { animation-delay: 680ms; }
+  .view-map.intro .stop[data-chart="3"] .stop-svg { animation-delay: 760ms; }
 }
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
-  .stop:hover { transform: translateY(-3px); box-shadow: 6px 7px 0 rgba(0, 0, 0, 0.32); }
-  .stop:active { transform: translateY(-3px) scale(0.98); }
+  .stop:hover { transform: translateY(-6px); }
+  .stop:hover::before { opacity: 0; }
+  .stop:hover::after { opacity: 1; }
+  .stop:hover .stop-marker { transform: scale(1.12); }
+  .stop:active { transform: translateY(-6px) scale(0.97); }
 }
-@keyframes view-in { from { opacity: 0; transform: scale(0.985); } }
-@keyframes from-right { from { opacity: 0; transform: translateX(16px); } }
-@keyframes from-left { from { opacity: 0; transform: translateX(-16px); } }
-@keyframes stop-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes grow-in { from { transform: scale(0.92); } }
+@keyframes from-right { from { transform: translateX(56px); } }
+@keyframes from-left { from { transform: translateX(-56px); } }
+@keyframes rise-in { from { transform: translateY(16px); } }
+@keyframes stop-in { from { transform: translateY(48px) scale(0.92); } }
+@keyframes pop-in { from { transform: scale(0.3); } }
+/* bars and segments grow from the zero line, which their transform-origin names in chart units */
+.chart .bar, .chart .segment { transform-box: view-box; }
 
 /* windows high contrast mode: keep the legend's colors and show which control is selected */
 @media (forced-colors: active) {
@@ -593,7 +663,6 @@ h2 {
   .views { overflow: visible; }
   .view-map { height: auto; }
   .trail { grid-template-columns: minmax(0, 1fr); }
-  .trail-line { display: none; }
   .chart-screen { height: auto; min-height: 0; margin: 10px; padding: 14px; grid-template-rows: auto auto auto; }
   .chart-row { position: static; }
   .chart-wrap, .chart { height: auto; }

@@ -60,6 +60,7 @@ function chart2(data, continents) {
     .selectAll("path").data(series, s => s.country).join("path")
     .attr("fill", "none")
     .attr("stroke-linejoin", "round").attr("stroke-linecap", "round")
+    .attr("pathLength", 1) // lets the entrance draw any line with the same dash, whatever its length
     .attr("d", s => line(s.scores));
   const nodeOf = new Map();
   paths.each(function (s) { nodeOf.set(s, this); });
@@ -71,7 +72,8 @@ function chart2(data, continents) {
     .selectAll("circle").data(waypoints).join("circle")
     .attr("cx", d => x(d.year)).attr("cy", d => y(d.score))
     .attr("fill", colors.focus).attr("stroke", colors.paper).attr("stroke-width", 3)
-    .style("paint-order", "stroke");
+    .style("paint-order", "stroke")
+    .style("transform-box", "fill-box").style("transform-origin", "center");
 
   // the dot that rides along the hovered line
   const marker = svg.append("circle").attr("r", 6)
@@ -103,6 +105,11 @@ function chart2(data, continents) {
       .attr("class", "label")
       .attr("role", "img")
       .attr("aria-label", d => `${d.s.country}: 2019 ${formatScore(d.s.scores[0])}, 2025 ${formatScore(d.s.scores[6])}, change ${formatChange(d.s.change)}`);
+    // an invisible box behind each label, so the gap between its words still counts as hovering it.
+    // it's sized to the text when the chart first shows, since hidden text can't be measured
+    label.append("rect").attr("class", "hit")
+      .attr("x", 1468).attr("y", d => d.y - 16).attr("height", 32).attr("width", 0)
+      .attr("fill", "transparent");
     const text = label.append("text").attr("class", "t-footnote")
       .attr("x", 1472).attr("y", d => d.y).attr("dominant-baseline", "central");
     text.append("tspan").attr("class", "strong ink").text(d => d.s.country);
@@ -117,6 +124,18 @@ function chart2(data, continents) {
     }).on("blur", () => {
       if (focusTooltipOpen()) leave();
     });
+    // hovering a label does what hovering its line does (david, nov 7): the line lights up, the
+    // crosshair and marker sit on 2025, where the label is, and the tooltip follows the cursor.
+    // a label the continent filter has faded out stays quiet, like its line
+    label.on("pointerenter", function (event, d) {
+      if (!included(d.s)) return;
+      crosshair.attr("x1", x(2025)).attr("x2", x(2025)).attr("visibility", "visible");
+      marker.attr("cx", x(2025)).attr("cy", y(d.s.scores[6])).attr("fill", colors.focus).attr("visibility", "visible");
+      paintHover(d.s);
+      showTooltip(event, d.s.country, tip(d.s, 2025));
+    }).on("pointermove", function (event, d) {
+      if (included(d.s)) moveTooltip(event);
+    }).on("pointerleave", () => { leave(); returnToFocus(svg.node()); });
     labelSets[view] = group;
   }
 
@@ -135,11 +154,13 @@ function chart2(data, continents) {
     { label: "Change", value: s => formatChange(s.change), numeric: true }
   ], [...series].sort((a, b) => d3.descending(a.change, b.change)));
 
+  // the tooltip, set out like a small table (david, nov 7: easier to read): the change first, since
+  // it's what this chart is about, then the scores in time order, with the year you're on marked
   function tip(s, year) {
+    const years = [...new Set([2019, year, 2025])].sort();
     return [
-      `${year}: ${formatScore(s.scores[year - 2019])}`,
-      `2019 → 2025: ${formatScore(s.scores[0])} → ${formatScore(s.scores[6])}`,
-      `Change since 2019: ${formatChange(s.change)}`
+      { label: "Change since 2019", value: formatChange(s.change) },
+      ...years.map(y => ({ label: String(y), value: formatScore(s.scores[y - 2019]), current: y === year }))
     ];
   }
 
@@ -246,6 +267,20 @@ function chart2(data, continents) {
   paint(false);
 
   return {
+    // the five highlighted lines draw themselves from 2019 to 2025, then their waypoint dots pop in
+    // from left to right and the end labels settle in, top to bottom. the 128 grey lines simply arrive
+    // with the screen: fading each on its own made every frame restyle them all
+    enter() {
+      svg.selectAll(".label").each(function () {
+        d3.select(this).select(".hit").attr("width", this.querySelector("text").getComputedTextLength() + 8);
+      });
+      enter(paths.filter(highlighted), [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }],
+        () => ({ duration: 750, easing: easing.inOut, delay: 150 }));
+      enter(dots.filter(d => highlighted(d.s)), { scale: 0.2, opacity: 0 }, d => ({ ...easing.bouncy, delay: 760 + 45 * lines.years.indexOf(d.year) }));
+      const current = labelSets[state.view];
+      enter(current.selectAll(".label"), { opacity: 0, translate: "-12px 0" }, (d, i) => ({ ...easing.bouncy, delay: 900 + 50 * i }));
+      enter(current.selectAll("line"), { opacity: 0 }, () => ({ duration: 300, easing: easing.out, delay: 900 }));
+    },
     view(next) {
       state.view = next;
       state.hover = null;

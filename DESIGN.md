@@ -96,7 +96,7 @@ A printed field guide you can walk through. Home is a trail map on a forest grou
 ## Colors
 
 - Forest is the one ink: text, bars, highlighted lines, focus on light.
-- Highlighter is the one accent, used only for the trail, markers, the selected chip and the current chart dot, and for focus on forest. It never marks data.
+- Highlighter is the one accent, used only for the markers, the selected chip and the current chart dot, and for focus on forest. It never marks data.
 - Context lines stay sage, a grey, because David's note on chart 2 calls them grey lines. Any tinted context color makes that copy false.
 - The seven pigments are for chart 3's factors only (dataviz validator on the paper color: colorblind 14.0, normal 15.7). A new mark that adds a hue goes through the validator against all of them.
 
@@ -108,10 +108,10 @@ A printed field guide you can walk through. Home is a trail map on a forest grou
 
 ## Layout
 
-- One root fills the window: the HUD on top, one view under it. Only the view scrolls.
+- One root fills the window: the HUD on top of a chart, one view under it. The map has no HUD (David, Nov 7). Only the view scrolls.
 - A chart screen's rows are header, `minmax(0, 1fr)` chart, footer. The SVG is 100% by 100% and keeps its viewBox, so it scales without changing geometry.
-- The map and each chart fit one screen from 1280x720 to 1920x1080. Below that height the view scrolls.
-- The map is the kicker, the title and the three stops, nothing else. It's a site for visitors, not a project submission (David, Nov 7), so the course context lives in the README, not on the page.
+- The map and each chart fit one screen, with nothing to scroll, on a 1080p screen at 100%, 125% and 150% scaling (windows about 1920x945, 1536x730 and 1280x585) and from 1280x720 up (David, Nov 7: no scrolling at 1920x1080). A chart screen keeps a 440px floor, so only a window under about 533px tall scrolls.
+- The map is the kicker, the title and the three stops on moving contours, nothing else: no HUD and no continent filter. It's a site for visitors, not a project submission (David, Nov 7), so the course context lives in the README, not on the page.
 - At 640px and under, views stack in normal page flow and wide charts scroll inside their box. A designed phone layout is out of scope.
 
 ## Elevation & Depth
@@ -124,12 +124,21 @@ Flat. Depth is a hard offset shadow with no blur, like a card laid on a map: cha
 
 ## Components
 
-- HUD: forest bar with a 1.5px darker edge. Holds the single `#continent` group on every view.
-- Stop: a link with a numbered marker overlapping its top edge, an icon band, "Chart n", title and dek. Lifts 3px on hover, presses to 0.98.
+- HUD: forest bar with a 1.5px darker edge, on the charts only. Holds the single `#continent` group, which keeps its setting while you're on the map.
+- Stop: a link with a numbered marker overlapping its top edge, an icon band, "Chart n", title and dek. Lifts 6px on a spring on hover while its marker swells to 1.12 and its shadow deepens (two shadow layers trading opacity, so nothing repaints), presses to 0.97. No trail line between the stops (David, Nov 7).
 - Chart footer: Data table, source, previous and next. An open table takes the chart's row and scrolls inside it.
-- Tooltip: note paper with a forest border, values first. Never catches the pointer.
+- Tooltip: note paper with a forest border, values first. Never catches the pointer. Chart 2's is a small table (David, Nov 7: more readable): Change since 2019 first, then the scores for 2019, the year you're on (marked) and 2025, values right-aligned. Chart 2's five end labels show it on hover as well as focus.
 
-Motion, all inside `prefers-reduced-motion: no-preference`: a view enters in 220ms from the stop you came from (scale 0.985, strong ease-out); plate to plate slides 16px the way you moved; stops rise once on first load, 60ms apart; a stamp lands once in 240ms. Chart changes run 300ms on a strong ease-in-out.
+Motion (David, Nov 7: bouncy, after a title screen he gave as a reference), all inside `prefers-reduced-motion: no-preference`. Springs are CSS `linear()` curves from `scripts/springs.py` (Apple-style duration and bounce), with the strong ease-out as the fallback:
+- `--spring-quick` (0.35s, bounce 0.3) for controls: a press squashes to 0.95 in 100ms and springs back; the toggle's thumb, the table chevron and a stop's hover lift.
+- `--spring-view` (0.45s, bounce 0.2) for screens: from the map a chart grows out of its stop (scale 0.92); chart to chart slides 56px the way you moved. The view scroller hides overflow only while a screen overshoots.
+- `--spring-bouncy` (0.5s, bounce 0.3) for the current chart's dot, the stops rising on first load, and chart 2's dots and end labels.
+- `--spring-pop` (0.5s, bounce 0.45, about 12% overshoot) only for the map's first load: the title's letters pop in one at a time, then each stop's marker and icon. It goes past the animate skill's 0.3 on purpose, to match the reference.
+- The map's background is the contour lines of a whole landscape, so it covers every part of the map (David, Nov 7): six broad hills drift slowly and the lines flow outward from their peaks forever, one line's step every 7s (linear, constant motion), traced each frame by marching squares on a canvas. About 1.4ms a frame; it stops when a chart shows, the tab is hidden or reduced motion is on.
+- Chart marks arrive each time a chart opens: bars and stacked segments grow out of the zero line on the strong ease-out, and chart 2's five lines draw from 2019 to 2025 on the strong ease-in-out. Data marks never use a spring, because a bar that bounces past its value shows a wrong number. Keyboard focus finishes an entrance at once.
+- Chart changes (filter, toggle) still run 300ms on the strong ease-in-out.
+
+Keeping lag down (David, Nov 7): the charts are drawn after the map's intro, in idle time, or the moment one opens; each chart screen is then laid out once, invisibly, in idle time, which halves the cost of its first opening; the charts' font weights load while the map shows. Only transforms and opacity animate on HTML; SVG marks animate only while a chart opens.
 
 ## Do's and Don'ts
 

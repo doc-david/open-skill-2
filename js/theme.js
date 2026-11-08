@@ -26,12 +26,38 @@ const colors = {
 
 // one motion setting for every chart change: d3's quartic ease-in-out is the same curve as the
 // animate skill's strong ease-in-out (cubic-bezier(0.77, 0, 0.175, 1)), 300ms keeps it snappy.
-// people who ask their system for less motion get instant changes instead.
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// people who ask their system for less motion get instant changes instead, even if they ask
+// while the page is open.
+const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const motion = {
-  duration: reduceMotion ? 0 : 300,
+  get duration() { return reduceMotionQuery.matches ? 0 : 300; },
   ease: d3.easePolyInOut.exponent(4)
 };
+
+// entrances: a chart's marks arrive each time its screen opens. the springs come from site.css, so
+// css and the charts share one set of curves. bars, segments and lines grow on the strong ease-out
+// and never overshoot, because a bar that bounces past its value shows a wrong number for a moment.
+// the bounce is for what doesn't encode a value: dots popping in and labels settling.
+const rootStyle = getComputedStyle(document.documentElement);
+const cssValue = name => rootStyle.getPropertyValue(name).trim();
+const easing = {
+  out: cssValue("--ease-out"),
+  inOut: cssValue("--ease-in-out"),
+  bouncy: { easing: cssValue("--spring-bouncy"), duration: parseFloat(cssValue("--spring-bouncy-time")) },
+  quick: { easing: cssValue("--spring-quick"), duration: parseFloat(cssValue("--spring-quick-time")) }
+};
+
+// plays an entrance on every node of a selection with the web animations api. from is either the
+// start state (the node animates from it to wherever it already is) or a full list of keyframes.
+// timing(d, i) gives each node its delay, duration and easing. whatever is still running from the
+// last entrance stops first. people who ask for less motion get the marks in place at once.
+function enter(selection, from, timing) {
+  if (reduceMotionQuery.matches) return;
+  selection.each(function (d, i) {
+    this.getAnimations().forEach(a => a.cancel());
+    this.animate(Array.isArray(from) ? from : [{ ...from, offset: 0 }], { fill: "backwards", ...timing(d, i) });
+  });
+}
 
 // faded = how far a mark steps back when the continent filter leaves it out
 const faded = 0.12;

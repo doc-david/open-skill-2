@@ -38,44 +38,75 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
   const lines = data.chart2_lines;
   d3.select("#country-count").text(lines.context_series.length + lines.risers.length + lines.fallers.length);
 
-  const charts = {
-    chart1: chart1(data, continents),
-    chart2: chart2(data, continents),
-    chart3: chart3(data, continents)
-  };
+  // drawing the charts waits until the map's intro has played and the browser is idle, so it never
+  // steals frames from the intro, or until a chart opens, whichever comes first (david, nov 7: keep
+  // lag to a minimum). a page that opens on a chart draws at once
+  const idle = window.requestIdleCallback || (callback => setTimeout(callback, 1));
+  let built = false;
+  function build() {
+    if (built) return;
+    built = true;
+    window.removeEventListener("hashchange", build);
+    const charts = {
+      chart1: chart1(data, continents),
+      chart2: chart2(data, continents),
+      chart3: chart3(data, continents)
+    };
 
-  // one continent filter drives all three charts: the linked-views idea from class
-  const chips = d3.selectAll("#continent button");
-  chips.on("click", function () {
-    const continent = this.dataset.continent;
-    chips.attr("aria-pressed", function () { return String(this.dataset.continent === continent); });
-    for (const [id, chart] of Object.entries(charts)) {
-      const shown = chart.filter(continent);
-      // role="status" announces the text when it changes, so it's only set when there's something to say
-      d3.select(`#${id} .empty`)
-        .classed("on", !shown)
-        .text(shown ? "" : `No countries from ${continent} on this chart.`);
+    // one continent filter drives all three charts: the linked-views idea from class
+    const chips = d3.selectAll("#continent button");
+    chips.on("click", function () {
+      const continent = this.dataset.continent;
+      chips.attr("aria-pressed", function () { return String(this.dataset.continent === continent); });
+      for (const [id, chart] of Object.entries(charts)) {
+        const shown = chart.filter(continent);
+        // role="status" announces the text when it changes, so it's only set when there's something to say
+        d3.select(`#${id} .empty`)
+          .classed("on", !shown)
+          .text(shown ? "" : `No countries from ${continent} on this chart.`);
+      }
+    });
+
+    // chart 2's switch between the biggest risers and the biggest decliners
+    const toggle = d3.select("#view");
+    toggle.selectAll("button").on("click", function () {
+      const view = this.dataset.view;
+      toggle.attr("data-view", view);
+      toggle.selectAll("button").attr("aria-pressed", function () { return String(this.dataset.view === view); });
+      charts.chart2.view(view);
+    });
+
+    // esc always dismisses a tooltip and its emphasis. focus stays where it is
+    function clearMarks() {
+      hideTooltip();
+      Object.values(charts).forEach(chart => chart.clear());
     }
-  });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") clearMarks();
+    });
 
-  // chart 2's switch between the biggest risers and the biggest decliners
-  const toggle = d3.select("#view");
-  toggle.selectAll("button").on("click", function () {
-    const view = this.dataset.view;
-    toggle.attr("data-view", view);
-    toggle.selectAll("button").attr("aria-pressed", function () { return String(this.dataset.view === view); });
-    charts.chart2.view(view);
-  });
+    // leaving a chart takes its tooltip and emphasis with it
+    window.addEventListener("hashchange", clearMarks);
 
-  // esc always dismisses a tooltip and its emphasis. focus stays where it is
-  function clearMarks() {
-    hideTooltip();
-    Object.values(charts).forEach(chart => chart.clear());
+    // a chart's marks arrive each time its screen opens, including when the page opens on it
+    function enterChart() {
+      const n = routeOf(location.hash);
+      if (n) charts[`chart${n}`].enter();
+    }
+    window.addEventListener("hashchange", enterChart);
+    // a hashchange that triggered this build has already passed the listener just added, so the
+    // chart it opened gets its entrance here
+    enterChart();
+    // the first time the browser lays out a chart screen it has to measure all its text and shapes,
+    // about 185ms on an intel laptop, enough to freeze the first opening. so each chart still hidden
+    // is laid out once, invisibly, in the browser's idle time; the first opening is then as quick as
+    // every one after (david, nov 7: keep lag to a minimum)
+    for (const n of [1, 2, 3]) idle(() => prewarm(viewOf(n)), { timeout: 4000 });
   }
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") clearMarks();
-  });
-
-  // leaving a chart takes its tooltip and emphasis with it
-  window.addEventListener("hashchange", clearMarks);
+  if (routeOf(location.hash)) {
+    build();
+  } else {
+    window.addEventListener("hashchange", build);
+    setTimeout(() => idle(build, { timeout: 1000 }), 1700);
+  }
 });

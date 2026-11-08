@@ -40,7 +40,7 @@
     <main class="views">
       <div class="view view-map" id="view-map">
         <div class="map-ground">
-          <svg class="contours" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+          <canvas class="contours" aria-hidden="true"></canvas>
           <div class="map-inner">
             <header class="masthead">
               <p class="kicker">A field guide to <span id="country-count"></span> countries</p>
@@ -48,7 +48,6 @@
             </header>
 
             <nav class="trail" aria-label="Charts">
-              <span class="trail-line" aria-hidden="true"></span>
               <a class="stop" href="#chart-1" data-chart="1">
                 <span class="stop-marker" aria-hidden="true">1</span>
                 <span class="stop-icon">

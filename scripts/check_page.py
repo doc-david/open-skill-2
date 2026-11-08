@@ -57,7 +57,9 @@ def open_view(page, name):
     target = "#view-map" if name == "map" else f"#chart{name[-1]}"
     page.evaluate(f"location.hash = '#{name}'")
     page.wait_for_selector(f"{target}:not([hidden])")
-    page.wait_for_timeout(280)
+    page.wait_for_timeout(40)
+    page.wait_for_function(f"!document.querySelector('{target}').getAnimations({{ subtree: true }}).filter(a => a.effect.getTiming().iterations !== Infinity).length", timeout=8000)
+    page.wait_for_timeout(60)
 
 
 def to_screen(page, chart, x, y):
@@ -200,7 +202,24 @@ def run_checks(args, url, errors):
         target = next(s for s in lines["context_series"] if s["country"] == "Brazil")
         page.mouse.move(*to_screen(page, "#chart2", 176 + 3 * 212, 910 - target["scores"][3] * 62))
         tip = page.inner_text(".tooltip")
-        check("chart 2 hover names a grey line", tip.split("\n")[0] != "" and "2022:" in tip, tip.replace("\n", " | "))
+        check("chart 2 hover names a grey line", tip.split("\n")[0] != "" and "2022" in tip and "Change since 2019" in tip, tip.replace("\n", " | "))
+        rows2 = page.evaluate("""() => { const box = document.querySelector('.tooltip-lines'); const values = [...box.querySelectorAll('.value')];
+            return [box.classList.contains('rows'), [...box.children].map(r => r.firstChild.textContent), values.every(v => getComputedStyle(v).textAlign === 'right'),
+                    box.querySelector('.current') && box.querySelector('.current').firstChild.textContent, new Set(values.map(v => Math.round(v.getBoundingClientRect().right))).size]; }""")
+        check("chart 2's tooltip reads as a small table: change first, then the years in order, values lined up", rows2 == [True, ["Change since 2019", "2019", "2022", "2025"], True, "2022", 1], rows2)
+        # hovering a highlighted country's end label shows its tooltip and lights its line (david, nov 7)
+        page.mouse.move(5, 5)
+        label = page.locator("#chart2 g:not([aria-hidden]) > .label").first
+        named_country = label.evaluate("l => l.__data__.s.country")
+        label.hover()
+        page.wait_for_timeout(50)
+        lit = page.evaluate("""c => [document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('.tooltip .tooltip-title').textContent,
+            [...document.querySelectorAll('#chart2 svg > g[aria-hidden] path')].find(p => p.__data__.country === c).getAttribute('stroke-width'),
+            document.querySelector('.tooltip').textContent.includes('Change since 2019')]""", named_country)
+        page.mouse.move(5, 5)
+        page.wait_for_timeout(50)
+        gone = page.evaluate("document.querySelector('.tooltip').classList.contains('visible')")
+        check("hovering a highlighted country's label shows its tooltip and lights its line", lit == [True, named_country, "4", True] and not gone, (named_country, lit, gone))
         if args.shots:
             page.screenshot(path=f"{args.shots}/chart-2-hover.png")
         page.mouse.move(5, 5)
@@ -293,8 +312,8 @@ def run_checks(args, url, errors):
 
         # in a window too short for the map, the scroll keys reach the view from the bare page and
         # from the hud, arrows stay with a chip, and the hud stays put while the view scrolls
-        scroller = browser.new_page(viewport={"width": 1280, "height": 400})
-        scroller.goto(url, wait_until="networkidle")
+        scroller = browser.new_page(viewport={"width": 1280, "height": 300})
+        scroller.goto(f"{url}#chart-1", wait_until="networkidle")
         scroller.wait_for_selector("#chart3 .segment", state="attached")
         at = "document.querySelector('.views').scrollTop"
         scroller.keyboard.press("PageDown")
@@ -314,7 +333,7 @@ def run_checks(args, url, errors):
         end = scroller.evaluate("(() => { const v = document.querySelector('.views'); return Math.abs(v.scrollTop + v.clientHeight - v.scrollHeight) < 2; })()")
         check("the scroll keys reach the view from the page and the hud", from_page > 50 and home == 0 and arrow > 0 and from_chip > 50 and arrow_chip == 0 and end, (from_page, home, arrow, from_chip, arrow_chip, end))
         held = scroller.evaluate("[document.querySelector('.hud').getBoundingClientRect().top, window.scrollY, document.querySelector('.views').scrollTop > 0]")
-        check("the hud stays put while the map scrolls under it", held[0] == 0 and held[1] == 0 and held[2], held)
+        check("the hud stays put while a chart scrolls under it", held[0] == 0 and held[1] == 0 and held[2], held)
         scroller.close()
 
         # the data table's button never covers the source line, even with text spacing turned up
@@ -349,8 +368,8 @@ def run_checks(args, url, errors):
         count = len(lines["context_series"]) + len(lines["risers"]) + len(lines["fallers"])
         check("the kicker counts chart 2's countries", kicker == f"A field guide to {count} countries", kicker)
         check("one continent group, in the hud", nav.evaluate("[document.querySelectorAll('#continent').length, !!document.querySelector('.hud #continent')]") == [1, True])
-        contours = nav.evaluate("(() => { const c = document.querySelector('.contours'); return [c.getAttribute('aria-hidden'), c.querySelectorAll('path').length]; })()")
-        check("the contour lines are decorative and drawn", contours == ["true", 32], contours)
+        contours = nav.evaluate("(() => { const c = document.querySelector('.contours'); const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let ink = 0; for (let i = 3; i < px.length; i += 4) if (px[i]) ink++; return [c.getAttribute('aria-hidden'), c.width === Math.round(c.clientWidth * devicePixelRatio), ink > 2000]; })()")
+        check("the contour lines are decorative, sharp and drawn", contours == ["true", True, True], contours)
 
         # which view is showing, what has focus, and what the hud says
         where = """() => {
@@ -407,14 +426,14 @@ def run_checks(args, url, errors):
         check("old #plate-n links open their chart as #chart-n", old["shown"] == ["chart2"] and old["count"] == "Chart 2 of 3" and old["hash"] == "#chart-2" and older == [["chart3"], "#chart-3"], (old, older))
         check("the page has no explored stamps", nav.locator(".explored, .visually-hidden").count() == 0 and "xplored" not in nav.text_content("body"))
 
-        # the chips drive all three charts from the map and from every chart
+        # the chips drive all three charts from every chart
         def solid():
             return nav.evaluate("""() => [
                 [...document.querySelectorAll('#chart1 .row')].filter(r => r.getAttribute('opacity') === '1').map(r => r.__data__.country),
                 [...document.querySelectorAll('#chart2 svg > g[aria-hidden] path')].filter(r => +r.getAttribute('opacity') === 1).map(r => r.__data__.country),
                 [...document.querySelectorAll('#chart3 .row')].filter(r => r.getAttribute('opacity') === '1').map(r => r.__data__.country)]""")
         driven = []
-        for view, chip, place in [("map", "europe", "Europe"), ("chart-1", "asia", "Asia"), ("chart-2", "africa", "Africa"), ("chart-3", "south-america", "South America")]:
+        for view, chip, place in [("chart-1", "asia", "Asia"), ("chart-2", "africa", "Africa"), ("chart-3", "south-america", "South America")]:
             nav.evaluate(f"location.hash = '#{view}'")
             nav.wait_for_timeout(100)
             nav.click(f"#continent-{chip}")
@@ -426,7 +445,16 @@ def run_checks(args, url, errors):
                   and sorted(three_) == sorted(r["country"] for r in rows if continents[r["country"]] == place)
                   and len(three_) == 1 and len(two_) > 0)
             driven.append((view, place, ok))
-        check("the chips drive all three charts from the map and every chart", all(d[2] for d in driven), driven)
+        check("the chips drive all three charts from every chart", all(d[2] for d in driven), driven)
+        hidden_hud = []
+        for view in ("map", "chart-2", "map"):
+            nav.evaluate(f"location.hash = '#{view}'")
+            nav.wait_for_timeout(100)
+            hidden_hud.append([view, nav.locator(".hud").is_visible(), nav.locator("#continent-asia").is_visible(), nav.evaluate("document.getElementById('continent-south-america').getAttribute('aria-pressed')")])
+        check("the map has no hud or filter; a chart has both, with the filter as you left it",
+              hidden_hud == [["map", False, False, "true"], ["chart-2", True, True, "true"], ["map", False, False, "true"]], hidden_hud)
+        nav.evaluate("location.hash = '#chart-3'")
+        nav.wait_for_timeout(100)
         nav.click("#continent-all")
         nav.wait_for_timeout(450)
         everything = [len(x) for x in solid()]
@@ -466,7 +494,7 @@ def run_checks(args, url, errors):
         chips = [f"continent-{c}" for c in ["all", "africa", "asia", "europe", "north-america", "oceania", "south-america"]]
         hud = ["hud-back", "#chart-1", "#chart-2", "#chart-3"] + chips
         wants = {
-            "map": chips + ["#chart-1", "#chart-2", "#chart-3"],
+            "map": ["#chart-1", "#chart-2", "#chart-3"],
             "chart-1": hud + ["row"] * 20 + ["summary", "#chart-2"],
             "chart-2": hud + ["view-risers", "view-decliners"] + ["label"] * 5 + ["summary", "#chart-1", "#chart-3"],
             "chart-3": hud + ["row"] * 6 + ["summary", "#chart-2", "#map"],
@@ -550,7 +578,8 @@ def run_checks(args, url, errors):
 
         # on a window too short for the chart, the view scrolls: a focus tooltip stays with its row,
         # and steps away once the row has scrolled out of the view behind the hud
-        short = browser.new_page(viewport={"width": 1440, "height": 420})
+        # 300 tall: the chart screen keeps a 440px floor, so this view scrolls about 230px
+        short = browser.new_page(viewport={"width": 1440, "height": 300})
         short.goto(f"{url}#chart-1", wait_until="networkidle")
         short.wait_for_selector("#chart3 .segment", state="attached")
         for _ in range(12):
@@ -601,11 +630,11 @@ def run_checks(args, url, errors):
         # one screen from 1280x720 to 1920x1080: nothing scrolls, and each chart keeps its figma viewbox
         boxes = {1: "80 200 1760 760", 2: "80 200 1760 760", 3: "80 280 1760 680"}
         fits = []
-        for size in ((1280, 720), (1366, 768), (1920, 1080)):
+        for size in ((1280, 585), (1280, 720), (1366, 768), (1536, 730), (1920, 945), (1920, 1080)):
             fit = browser.new_page(viewport={"width": size[0], "height": size[1]})
             fit.goto(url, wait_until="networkidle")
             fit.wait_for_selector("#chart3 .segment", state="attached")
-            ground = fit.evaluate("(() => { const v = document.querySelector('.views'), g = document.querySelector('.map-ground'); return g.offsetHeight <= v.clientHeight + 1 && g.scrollHeight <= g.clientHeight + 1 && g.getBoundingClientRect().bottom <= innerHeight + 1; })()")
+            ground = fit.evaluate("(() => { const v = document.querySelector('.views'), g = document.querySelector('.map-ground'), inner = document.querySelector('.map-inner'); g.scrollTop = 50; const stuck = g.scrollTop === 0; return g.offsetHeight <= v.clientHeight + 1 && v.scrollHeight <= v.clientHeight + 1 && stuck && inner.getBoundingClientRect().bottom <= g.getBoundingClientRect().bottom + 1 && g.getBoundingClientRect().bottom <= innerHeight + 1 && Math.abs(g.offsetHeight - v.clientHeight) <= 1 && Math.abs(v.getBoundingClientRect().bottom - innerHeight) <= 1; })()")
             fits.append((size, "map", ground))
             for n in (1, 2, 3):
                 open_view(fit, f"chart-{n}")
@@ -616,7 +645,7 @@ def run_checks(args, url, errors):
                 }})()""")
                 fits.append((size, n, state == [True, True, True, boxes[n], True], state))
             fit.close()
-        check("the map and each chart fit one screen from 1280x720 to 1920x1080", all(f[2] for f in fits), [f for f in fits if not f[2]])
+        check("the map and each chart fit one screen on a 1080p screen at 100%, 125% and 150% scaling, and from 1280x720 up", all(f[2] for f in fits), [f for f in fits if not f[2]])
 
         # no sideways scroll at 390px on any view, including with a table open
         narrow = browser.new_page(viewport={"width": 390, "height": 844})
@@ -636,31 +665,148 @@ def run_checks(args, url, errors):
             narrow.screenshot(path=f"{args.shots}/phone-map.png")
         narrow.close()
 
-        # motion: the classes land where the handoff says
+        # motion: springs on the screens, the map's first load and the controls (david, nov 7: bouncy,
+        # after a title screen he gave as a reference). data marks grow but never overshoot
         moving = browser.new_page(viewport={"width": 1280, "height": 720})
         moving.goto(url, wait_until="networkidle")
         moving.wait_for_selector("#chart3 .segment", state="attached")
         step = lambda selector, probe: (moving.click(selector), moving.wait_for_timeout(40), moving.evaluate(probe))[2]
-        intro = moving.eval_on_selector_all(".stop.intro", "s => s.map(x => getComputedStyle(x).animationName + ' ' + getComputedStyle(x).animationDelay)")
-        check("the stops rise in on first load, 60ms apart", intro == ["stop-in 0s", "stop-in 0.06s", "stop-in 0.12s"], intro)
-        grown = step(".stop[data-chart='3']", "(() => { const v = document.getElementById('chart3'), c = getComputedStyle(v); return [v.classList.contains('view-in'), c.animationDuration, v.style.transformOrigin, document.getAnimations().some(a => a.animationName === 'view-in')]; })()")
-        check("a chart grows from the stop you came from", grown == [True, "0.22s", "82% 64%", True], grown)
+        intro = moving.evaluate("""() => {
+            const css = s => getComputedStyle(document.querySelector(s));
+            const stops = [...document.querySelectorAll('.view-map.intro .stop')].map(x => getComputedStyle(x).animationName + ' ' + getComputedStyle(x).animationDelay);
+            const letters = [...document.querySelectorAll('.view-map.intro h1 .letter')].map(x => getComputedStyle(x).animationName);
+            const ground = document.querySelector('.contours');
+            return [stops, letters.length, new Set(letters).size, ground.tagName, getComputedStyle(ground).animationName,
+                    css('.view-map.intro .stop').animationTimingFunction.includes('linear('), css('.view-map.intro h1 .letter').animationTimingFunction.includes('linear(')];
+        }""")
+        check("the map's first load fades the contours in, pops the title's letters and springs the stops up 80ms apart",
+              intro[0] == ["fade-in, stop-in 0.24s", "fade-in, stop-in 0.32s", "fade-in, stop-in 0.4s"] and intro[1] == 14 and intro[2] == 1 and intro[3] == "CANVAS" and intro[4] == "fade-in" and intro[5] and intro[6], intro)
+        # the ground's contours flow without end while the map shows, cheaply, and stop on a chart
+        frames = "document.querySelector('.contours').frames"
+        f0 = moving.evaluate(frames)
+        moving.wait_for_timeout(500)
+        f1 = moving.evaluate(frames)
+        cost = moving.evaluate("(() => { const t0 = performance.now(); for (let i = 0; i < 30; i++) drawContours(1000 + i * 16); return (performance.now() - t0) / 30; })()")
+        check("the map's contours keep flowing, each frame drawn in under 4ms", f1 - f0 > 15 and cost < 4, (f0, f1, round(cost, 2)))
+        title = moving.evaluate("[document.querySelector('h1').textContent, document.querySelector('h1').getAttribute('aria-label'), [...document.querySelectorAll('h1 .word')].every(w => w.getAttribute('aria-hidden') === 'true')]")
+        named = moving.get_by_role("heading", name="World Happiness", exact=True).count()
+        check("the popping title still reads as World Happiness", title == ["World Happiness", "World Happiness", True] and named == 1, (title, named))
+        grown = step(".stop[data-chart='3']", "(() => { const v = document.getElementById('chart3'), c = getComputedStyle(v); return [v.classList.contains('view-in'), c.animationName, c.animationDuration, v.style.transformOrigin, getComputedStyle(document.querySelector('.views')).overflowY]; })()")
+        check("a chart grows from the stop you came from on a spring, with no scrollbar while it overshoots", grown == [True, "fade-in, grow-in", "0.2s, 0.61s", "82% 64%", "hidden"], grown)
+        moving.wait_for_timeout(900)
+        landed = moving.evaluate("[document.getElementById('chart3').className, getComputedStyle(document.querySelector('.views')).overflowY]")
+        check("once a chart lands, the view scrolls again if it needs to", landed == ["view chart-screen panel", "auto"], landed)
+        g0 = moving.evaluate(frames)
+        moving.wait_for_timeout(400)
+        check("the contours stop while a chart shows", moving.evaluate(frames) == g0, (g0, moving.evaluate(frames)))
         slid = [step(".hud-dots a[href='#chart-1']", "document.getElementById('chart1').className"), step(".hud-dots a[href='#chart-2']", "document.getElementById('chart2').className")]
         check("chart to chart slides the way you moved", "chart-from-left" in slid[0] and "chart-from-right" in slid[1], slid)
-        later = step("#hud-back", "[document.querySelectorAll('.stop.intro').length, document.getElementById('view-map').classList.contains('view-in'), document.getElementById('view-map').style.transformOrigin]")
-        check("the stops don't rise again on later visits", later == [0, True, "50% 64%"], later)
-        moving.wait_for_timeout(300)
+        later = step("#hud-back", "[document.querySelectorAll('.intro').length, document.getElementById('view-map').classList.contains('view-in'), document.getElementById('view-map').style.transformOrigin]")
+        check("the map's intro doesn't play again on later visits", later == [0, True, "50% 64%"], later)
+        moving.wait_for_timeout(900)
         moving.hover(".stop[data-chart='1']")
-        moving.wait_for_timeout(250)
-        lift = moving.eval_on_selector(".stop[data-chart='1']", "s => getComputedStyle(s).transform")
-        check("hovering lifts a stop 3px", lift == "matrix(1, 0, 0, 1, 0, -3)", lift)
+        moving.wait_for_timeout(800)
+        lift = moving.eval_on_selector(".stop[data-chart='1']", "s => [getComputedStyle(s).transform, getComputedStyle(s.querySelector('.stop-marker')).transform]")
+        check("hovering lifts a stop 6px and swells its marker", lift == ["matrix(1, 0, 0, 1, 0, -6)", "matrix(1.12, 0, 0, 1.12, 0, 0)"], lift)
+
+        # a chart's marks: bars and segments grow out of the zero line on the ease-out, never a spring,
+        # so no bar ever passes its value; chart 2's dots and labels are the ones that bounce
+        moving.mouse.move(5, 5)
+        moving.click(".stop[data-chart='1']")
+        moving.wait_for_timeout(30)
+        bars = moving.evaluate("""() => {
+            const anims = [...document.querySelectorAll('#chart1 .bar')].flatMap(b => b.getAnimations());
+            anims.forEach(a => { a.pause(); a.currentTime = 380; });
+            const bar = document.querySelector('#chart1 .bar').getBoundingClientRect(), zero = document.querySelector('#chart1 .axisline').getBoundingClientRect();
+            const out = [anims.length, [...new Set(anims.map(a => a.effect.getTiming().easing))], anims[0].effect.getKeyframes()[0].scale, Math.abs(bar.left - zero.left) < 1.5, bar.width > 0];
+            anims.forEach(a => a.finish());
+            return out;
+        }""")
+        check("chart 1's bars grow out of the zero line with no overshoot", bars[0] == 20 and len(bars[1]) == 1 and "linear(" not in bars[1][0] and bars[2] == "0 1" and bars[3] and bars[4], bars)
+        moving.click(".hud-dots a[href='#chart-3']")
+        moving.wait_for_timeout(30)
+        segs = moving.evaluate("[...document.querySelectorAll('#chart3 .segment')].flatMap(x => x.getAnimations()).map(a => a.effect.getTiming().easing)")
+        check("chart 3's stacks grow with no overshoot", len(segs) == 42 and not any("linear(" in e for e in segs), (len(segs), set(segs)))
+        moving.click(".hud-dots a[href='#chart-2']")
+        moving.wait_for_timeout(30)
+        lines2 = moving.evaluate("""() => {
+            const g = sel => [...document.querySelectorAll(sel)].flatMap(x => x.getAnimations());
+            const drawn = g('#chart2 svg > g[aria-hidden] path').filter(a => a.effect.getKeyframes().some(k => k.strokeDashoffset !== undefined));
+            const dots = g('#chart2 svg > g[aria-hidden] circle'), labels = g('#chart2 .label');
+            return [drawn.length, dots.length, dots.every(a => a.effect.getTiming().easing.includes('linear(')), labels.length, labels.every(a => a.effect.getTiming().easing.includes('linear('))];
+        }""")
+        check("chart 2 draws its five lines, then its dots and labels bounce in", lines2 == [5, 35, True, 5, True], lines2)
         moving.close()
+
+        # the map's background: contour lines in every part of it, and no yellow dotted trail line
+        bg = browser.new_page(viewport={"width": 1920, "height": 945})
+        bg.goto(url, wait_until="networkidle")
+        bg.wait_for_timeout(600)
+        tiles = bg.evaluate("""() => { const c = document.querySelector('.contours'), ctx = c.getContext('2d'), out = [];
+            for (let ty = 0; ty < 3; ty++) for (let tx = 0; tx < 4; tx++) {
+                const w = Math.floor(c.width / 4), h = Math.floor(c.height / 3), px = ctx.getImageData(tx * w, ty * h, w, h).data;
+                let ink = 0; for (let i = 3; i < px.length; i += 4) if (px[i] > 40) ink++; out.push(ink); }
+            return out; }""")
+        trail = bg.evaluate("[document.querySelectorAll('.trail-line').length, [...document.querySelectorAll('#view-map *')].filter(e => getComputedStyle(e).borderTopStyle === 'dashed').length]")
+        check("the map's moving contours cover every part of the background, with no dotted trail line", min(tiles) > 300 and trail == [0, 0], (tiles, trail))
+        # the charts are drawn once the intro has played; a chart opened before then draws at once,
+        # and laying the charts out in idle time never shows one
+        early = [bg.evaluate("document.querySelectorAll('#chart1 .row').length")]
+        bg.wait_for_timeout(3500)
+        early.append(bg.evaluate("[document.querySelectorAll('#chart1 .row').length, document.querySelectorAll('.prewarm').length, [...document.querySelectorAll('.chart-screen')].map(v => v.hidden && getComputedStyle(v).display === 'none')]"))
+        check("the charts draw after the map's intro, and their idle layout never shows them", early == [0, [20, 0, [True, True, True]]], early)
+        bg.close()
+        rush = browser.new_page(viewport={"width": 1280, "height": 720})
+        rush.goto(url, wait_until="domcontentloaded")
+        rush.wait_for_function("document.getElementById('country-count').textContent !== ''")
+        rush.evaluate("location.hash = '#chart-3'")
+        rush.wait_for_timeout(60)
+        rushed3 = rush.evaluate("[document.querySelectorAll('#chart3 .row').length, document.querySelectorAll('#chart3 .segment').length, [...document.querySelectorAll('#chart3 .segment')].some(x => x.getAnimations().length)]")
+        check("a chart opened before the idle draw draws at once, with its entrance", rushed3 == [6, 42, True], rushed3)
+        rush.close()
+        # lifting a stop fades two shadow layers instead of animating box-shadow, which repaints
+        lifted = browser.new_page(viewport={"width": 1280, "height": 720})
+        lifted.goto(url, wait_until="networkidle")
+        lifted.wait_for_timeout(1800)
+        lifted.hover(".stop[data-chart='2']")
+        lifted.wait_for_timeout(400)
+        shadows = lifted.evaluate("""() => { const s = document.querySelector(".stop[data-chart='2']");
+            return [getComputedStyle(s).transitionProperty.includes('box-shadow'), getComputedStyle(s).boxShadow, getComputedStyle(s, '::before').opacity, getComputedStyle(s, '::after').opacity]; }""")
+        check("a lifted stop swaps its shadow by opacity alone", shadows == [False, "none", "0", "1"], shadows)
+        lifted.close()
+
+        # on a window short enough to scroll, a chart change keeps the scrollbar, so nothing jumps 15px
+        tall = browser.new_page(viewport={"width": 1280, "height": 500})
+        tall.goto(f"{url}#chart-1", wait_until="networkidle")
+        tall.wait_for_selector("#chart3 .segment", state="attached")
+        tall.wait_for_timeout(1200)
+        tall.click(".hud-dots a[href='#chart-2']")
+        tall.wait_for_timeout(150)
+        kept = tall.evaluate("[getComputedStyle(document.querySelector('.views')).overflowY, document.querySelector('.views').scrollHeight > document.querySelector('.views').clientHeight]")
+        check("a chart change on a scrolling window keeps its scrollbar", kept == ["auto", True], kept)
+        tall.close()
+
+        # keyboard focus doesn't wait for an entrance: the tooltip sits where the mark ends up
+        hurry = browser.new_page(viewport={"width": 1280, "height": 720})
+        hurry.goto(url, wait_until="networkidle")
+        hurry.wait_for_selector("#chart3 .segment", state="attached")
+        hurry.evaluate("location.hash = '#chart-1'")
+        hurry.wait_for_timeout(30)
+        hurry.keyboard.press("Tab")
+        rushed = hurry.evaluate("""() => {
+            document.querySelector('#chart1 .row').focus({ focusVisible: true });
+            const view = document.getElementById('chart1'), bar = view.querySelector('.bar').getBoundingClientRect(), tip = document.querySelector('.tooltip');
+            return [view.getAnimations({ subtree: true }).length, tip.classList.contains('visible'), Math.round(bar.width)];
+        }""")
+        full = hurry.evaluate("Math.round(document.querySelector('#chart1 .bar').getBoundingClientRect().width)")
+        check("keyboard focus finishes a chart's entrance before its tooltip opens", rushed[0] == 0 and rushed[1] and rushed[2] == full, (rushed, full))
+        hurry.close()
 
         # someone who asks for less motion gets no moving screens, and no transforms from any of it
         still = browser.new_context(reduced_motion="reduce", viewport={"width": 1280, "height": 720}).new_page()
         still.goto(url, wait_until="networkidle")
         still.wait_for_selector("#chart3 .segment", state="attached")
-        probe = """() => [document.getAnimations().filter(a => a.animationName).map(a => a.animationName),
+        probe = """() => [document.getAnimations().map(a => a.animationName || 'a chart entrance'),
             getComputedStyle(document.querySelector('.view:not([hidden])')).transform,
             [...document.querySelectorAll('.stop')].map(s => getComputedStyle(s).transform)]"""
         seen_ = [still.evaluate(probe)]
@@ -677,7 +823,22 @@ def run_checks(args, url, errors):
         still.wait_for_timeout(250)
         seen_.append(still.evaluate(probe))
         check("reduced motion adds no animations or transforms", all(a == [] and t == "none" and all(x == "none" for x in st) for a, t, st in seen_), seen_)
+        still.goto(f"{url}#map", wait_until="networkidle")
+        still.wait_for_timeout(300)
+        quiet = [still.evaluate("document.querySelector('.contours').frames")]
+        still.wait_for_timeout(400)
+        quiet.append(still.evaluate("document.querySelector('.contours').frames"))
+        check("reduced motion draws the contours once and keeps them still", quiet[0] == quiet[1] and quiet[0] >= 1, quiet)
         still.close()
+        switched = browser.new_page(viewport={"width": 1280, "height": 720})
+        switched.goto(url, wait_until="networkidle")
+        switched.wait_for_selector("#chart3 .segment", state="attached")
+        switched.emulate_media(reduced_motion="reduce")
+        switched.evaluate("location.hash = '#chart-2'")
+        switched.wait_for_timeout(80)
+        mid = [switched.evaluate("document.getAnimations().length"), switched.evaluate("(() => { const f = document.querySelector('.contours').frames; return f; })()")]
+        check("switching on reduced motion mid-visit stops the chart entrances", mid[0] == 0, mid)
+        switched.close()
 
         # change one score in the data: the page refuses to draw, says so, and stays quiet afterwards
         tampered = browser.new_page(viewport={"width": 1280, "height": 720})

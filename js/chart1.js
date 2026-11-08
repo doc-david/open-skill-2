@@ -58,6 +58,7 @@ function chart1(data, continents) {
 
   // bar length = score x 128px, starting from zero (honest marks)
   row.append("path").attr("class", "bar")
+    .style("transform-origin", `${x(0)}px 0`)
     .attr("fill", colors.focus)
     .attr("d", d => barPath(x(0), d.top + 4, x(d.score) - x(0), 22, 4));
 
@@ -101,6 +102,11 @@ function chart1(data, continents) {
   ], rows);
 
   return {
+    // the bars grow out of the zero line, top to bottom, and each value settles in once its bar is out
+    enter() {
+      enter(row.select(".bar"), { scale: "0 1" }, (d, i) => ({ duration: 500, easing: easing.out, delay: 100 + 20 * i }));
+      enter(row.select(".value"), { opacity: 0, translate: "-10px 0" }, (d, i) => ({ ...easing.quick, delay: 360 + 20 * i }));
+    },
     filter(continent) {
       const included = d => continent === "All" || d.continent === continent;
       row.transition().duration(motion.duration).ease(motion.ease)
