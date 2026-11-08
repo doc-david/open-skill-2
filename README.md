@@ -17,7 +17,7 @@ The three World Happiness dashboards from Open Skill 1 were first built in Figma
 - `data/chart-data.json`: regenerated from the course CSV by Open Skill 1's `scripts/prep_data.py`. Its SHA-256 starts with `22c8681b`, byte-identical to Open Skill 1's verified file
 - `data/continents.json`: each charted country's continent, using the same rule as chart 3 (`scripts/build_continents.py`)
 - `css/tokens.css`: generated from `scripts/figma-variables.json` by `scripts/figma_tokens.py`. Type sizes and spacing come from the Figma file's variables; the colors and fonts are the Field Guide look David picked, not yet added to the Figma file
-- `js/`: one D3 module per chart (`chart1.js`, `chart2.js`, `chart3.js`), plus `views.js` (the map and plate screens), `tables.js`, `tooltip.js`, `format.js` (Open Skill 1's rounding rules), `theme.js` and `main.js`
+- `js/`: one D3 module per chart (`chart1.js`, `chart2.js`, `chart3.js`), plus `views.js` (the map and chart screens), `tables.js`, `tooltip.js`, `format.js` (Open Skill 1's rounding rules), `theme.js` and `main.js`
 - `scripts/check_page.py`: headless-browser checks that compare every drawn label, bar and interaction with the data
 
 ## Run it locally

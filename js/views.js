@@ -1,14 +1,15 @@
 // the screens: one view shows at a time, and the address bar's hash says which one.
-// #map (the default), #plate-1, #plate-2 or #plate-3. because the view lives in the address,
-// the back button and a reload keep your place, and each plate has a link you can share.
-const hudPlates = document.getElementById("hud-plates");
+// #map (the default), #chart-1, #chart-2 or #chart-3. because the view lives in the address,
+// the back button and a reload keep your place, and each chart has a link you can share.
+const hudCharts = document.getElementById("hud-charts");
 const hudCount = document.getElementById("hud-count");
 const hudDots = document.querySelectorAll(".hud-dots a");
 const views = document.querySelector(".views");
 
-// "#plate-2" gives 2. anything else, including an unknown hash, gives 0: the map
+// "#chart-2" gives 2, and so does "#plate-2", the address it had before. anything else,
+// including an unknown hash, gives 0: the map
 function routeOf(hash) {
-  const match = /^#plate-([123])$/.exec(hash);
+  const match = /^#(?:chart|plate)-([123])$/.exec(hash);
   return match ? Number(match[1]) : 0;
 }
 
@@ -18,15 +19,13 @@ function viewOf(route) {
 
 function showView(route) {
   document.querySelectorAll(".view").forEach(view => { view.hidden = view !== viewOf(route); });
-  hudPlates.hidden = route === 0;
-  hudCount.textContent = `Plate ${route} of 3`;
+  hudCharts.hidden = route === 0;
+  hudCount.textContent = `Chart ${route} of 3`;
   hudDots.forEach((dot, i) => {
     if (i + 1 === route) dot.setAttribute("aria-current", "page");
     else dot.removeAttribute("aria-current");
   });
   views.scrollTop = 0;
-  if (route === 0) stampExplored();
-  else seen.add(route);
 }
 
 // the map's contour lines: four clusters of wobbly rings, generated once. decoration, no data
@@ -49,35 +48,19 @@ function drawContours() {
   d3.select(".contours").selectAll("path").data(rings).join("path").attr("d", d => d);
 }
 
-// a plate you've opened gets an "Explored" stamp on its stop, the first time you come back to the map.
-// stamped is what's showing on the map; seen is everything opened since this page loaded
-const seen = new Set();
-const stamped = new Set();
-
-function stampExplored() {
-  for (const plate of seen) {
-    if (stamped.has(plate)) continue;
-    stamped.add(plate);
-    const stop = document.querySelector(`.stop[data-plate="${plate}"]`);
-    stop.querySelector(".explored").hidden = false;
-    stop.querySelector(".explored").classList.add("fresh");
-    stop.querySelector(".visually-hidden").hidden = false;
-  }
-}
-
 // how a view arrives. the rules are in css, inside prefers-reduced-motion: no-preference, so people
 // who ask for less motion get none. a hidden element replays its animation when it shows again,
 // so every motion class comes off before the next view opens.
-//   plate to plate: slide in from the side you moved toward
-//   map to plate, or back: grow from the stop you came from
+//   chart to chart: slide in from the side you moved toward
+//   map to chart, or back: grow from the stop you came from
 const stopOrigin = { 1: "18% 64%", 2: "50% 64%", 3: "82% 64%" };
-const motionClasses = ["view-in", "plate-from-right", "plate-from-left", "intro", "fresh"];
+const motionClasses = ["view-in", "chart-from-right", "chart-from-left", "intro"];
 
 function animateView(from, to) {
   motionClasses.forEach(name => document.querySelectorAll(`.${name}`).forEach(e => e.classList.remove(name)));
   const view = viewOf(to);
   if (from !== 0 && to !== 0) {
-    view.classList.add(to > from ? "plate-from-right" : "plate-from-left");
+    view.classList.add(to > from ? "chart-from-right" : "chart-from-left");
   } else {
     view.style.transformOrigin = stopOrigin[from || to];
     view.classList.add("view-in");
@@ -99,7 +82,13 @@ function passScrollKeys(event) {
 }
 document.addEventListener("keydown", passScrollKeys);
 
+// an old #plate-n link swaps itself for #chart-n, without adding a step to the back button
+function renameOldHash() {
+  if (/^#plate-[123]$/.test(location.hash)) history.replaceState(null, "", location.hash.replace("plate", "chart"));
+}
+
 drawContours();
+renameOldHash();
 let route = routeOf(location.hash);
 showView(route);
 // the stops rise in once, only when the map is the first thing you see
@@ -107,6 +96,7 @@ if (route === 0) document.querySelectorAll(".stop").forEach(stop => stop.classLi
 
 // a new view is a new page to a keyboard or a screen reader, so focus moves to its heading
 window.addEventListener("hashchange", () => {
+  renameOldHash();
   const next = routeOf(location.hash);
   if (!viewOf(next)) return; // the page refused its data, so there are no views left to show
   if (next !== route) animateView(route, next);

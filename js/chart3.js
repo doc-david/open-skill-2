@@ -77,7 +77,7 @@ function chart3(data, continents) {
     .attr("dominant-baseline", "central")
     .text(d => d.continent);
 
-  // a nested data join: each row's data is its 7 segments. the plate-colored stroke draws the 2px gaps
+  // a nested data join: each row's data is its 7 segments. the paper-colored stroke draws the 2px gaps
   const segments = row.selectAll(".segment").data(d => d.segments).join("path")
     .attr("class", "segment")
     .attr("fill", s => factors[s.name].color)

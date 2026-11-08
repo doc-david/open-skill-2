@@ -17,18 +17,18 @@ root = Path(__file__).resolve().parent.parent
 out = root / "assets" / "d3"
 data = json.loads((root / "data" / "chart-data.json").read_text(encoding="utf-8"))
 
-# the same width for every chart, with the plates back in normal flow instead of fitting the window
+# the same width for every chart, with the charts back in normal flow instead of fitting the window
 CSS = """
 .app { height: auto !important; }
 .views { overflow: visible !important; }
-.plate { height: auto !important; min-height: 0 !important; }
+.chart-screen { height: auto !important; min-height: 0 !important; }
 .chart-wrap, .chart { height: auto !important; overflow: visible !important; }
 .chart svg { width: 880px !important; height: auto !important; min-width: 0 !important; }
 """
 
 
-def open_plate(page, n):
-    page.evaluate(f"location.hash = '#plate-{n}'")
+def open_chart(page, n):
+    page.evaluate(f"location.hash = '#chart-{n}'")
     page.wait_for_selector(f"#chart{n}:not([hidden])")
     page.wait_for_timeout(300)
 
@@ -52,7 +52,7 @@ def main():
         page.evaluate("document.fonts.ready")
 
         # chart 1: the tooltip on a hovered bar, the other bars stepped back
-        open_plate(page, 1)
+        open_chart(page, 1)
         box = clip_of(page, "#chart1")
         bar = page.locator("#chart1 .row", has_text="Denmark").locator(".bar").bounding_box()
         page.mouse.move(bar["x"] + bar["width"] * 0.62, bar["y"] + bar["height"] / 2)
@@ -62,7 +62,7 @@ def main():
 
         # chart 2: a grey line figma couldn't name. the window ends at the chart's bottom edge,
         # so the tooltip flips up instead of being cut off by the crop
-        open_plate(page, 2)
+        open_chart(page, 2)
         box = clip_of(page, "#chart2")
         page.set_viewport_size({"width": 1100, "height": round(box["height"]) + 40})
         box = clip_of(page, "#chart2", block="end")
@@ -79,7 +79,7 @@ def main():
         page.mouse.move(2, 2)
 
         # chart 3: the continent filter that links all three charts
-        open_plate(page, 3)
+        open_chart(page, 3)
         page.click("#continent-europe")
         page.wait_for_timeout(500)
         page.mouse.move(2, 2)

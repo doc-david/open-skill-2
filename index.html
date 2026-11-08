@@ -14,13 +14,13 @@
 <body>
   <div class="app">
     <div class="hud">
-      <nav class="hud-plates" id="hud-plates" aria-label="Plates" hidden>
+      <nav class="hud-charts" id="hud-charts" aria-label="Charts" hidden>
         <a class="button" id="hud-back" href="#map"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Back to the map</a>
         <span class="hud-count" id="hud-count"></span>
         <span class="hud-dots">
-          <a href="#plate-1" aria-label="Plate 1"><span aria-hidden="true">1</span></a>
-          <a href="#plate-2" aria-label="Plate 2"><span aria-hidden="true">2</span></a>
-          <a href="#plate-3" aria-label="Plate 3"><span aria-hidden="true">3</span></a>
+          <a href="#chart-1" aria-label="Chart 1"><span aria-hidden="true">1</span></a>
+          <a href="#chart-2" aria-label="Chart 2"><span aria-hidden="true">2</span></a>
+          <a href="#chart-3" aria-label="Chart 3"><span aria-hidden="true">3</span></a>
         </span>
       </nav>
       <nav class="filter-bar" aria-label="Filter all charts by continent">
@@ -47,9 +47,9 @@
               <h1 tabindex="-1">World Happiness</h1>
             </header>
 
-            <nav class="trail" aria-label="Plates">
+            <nav class="trail" aria-label="Charts">
               <span class="trail-line" aria-hidden="true"></span>
-              <a class="stop" href="#plate-1" data-plate="1">
+              <a class="stop" href="#chart-1" data-chart="1">
                 <span class="stop-marker" aria-hidden="true">1</span>
                 <span class="stop-icon">
                   <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -58,32 +58,28 @@
                     <rect class="lit" x="12" y="6" width="24" height="6" rx="3"/><rect class="lit" x="12" y="36" width="24" height="6" rx="3"/>
                   </svg>
                 </span>
-                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
-                  <span class="stop-plate">Plate 1</span>
+                  <span class="stop-label">Chart 1</span>
                   <span class="stop-title">Happiest and Unhappiest Countries of 2025</span>
                   <span class="stop-dek">Top and bottom 10 ranked countries</span>
-                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
-              <a class="stop" href="#plate-2" data-plate="2">
+              <a class="stop" href="#chart-2" data-chart="2">
                 <span class="stop-marker" aria-hidden="true">2</span>
                 <span class="stop-icon">
                   <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 37.5C20 34 12 26 21 24S31 19 33 14" stroke-dasharray="3.5 4"/>
-                    <circle class="plate-fill" cx="9" cy="39" r="3.5"/>
+                    <circle class="paper-fill" cx="9" cy="39" r="3.5"/>
                     <path d="M35 16V3"/><path class="lit" d="M35 3H44L41 6.5L44 10H35Z"/>
                   </svg>
                 </span>
-                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
-                  <span class="stop-plate">Plate 2</span>
+                  <span class="stop-label">Chart 2</span>
                   <span class="stop-title">Score Change from 2019 to 2025</span>
                   <span class="stop-dek">Top 5 risers and decliners</span>
-                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
-              <a class="stop" href="#plate-3" data-plate="3">
+              <a class="stop" href="#chart-3" data-chart="3">
                 <span class="stop-marker" aria-hidden="true">3</span>
                 <span class="stop-icon">
                   <svg class="stop-svg" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -93,12 +89,10 @@
                     <path d="M6 32C14 30 20 35 28 32S37 29 42 31"/>
                   </svg>
                 </span>
-                <span class="explored" aria-hidden="true" hidden>Explored</span>
                 <span class="stop-text">
-                  <span class="stop-plate">Plate 3</span>
+                  <span class="stop-label">Chart 3</span>
                   <span class="stop-title">Factors of Happiness in 2025</span>
                   <span class="stop-dek">Top-ranked country of each continent</span>
-                  <span class="visually-hidden" hidden>, explored</span>
                 </span>
               </a>
             </nav>
@@ -106,7 +100,7 @@
         </div>
       </div>
 
-      <section class="view plate panel" id="chart1" aria-labelledby="chart1-title" hidden>
+      <section class="view chart-screen panel" id="chart1" aria-labelledby="chart1-title" hidden>
         <header class="panel-head">
           <div>
             <h2 id="chart1-title" tabindex="-1">Happiest and Unhappiest Countries of 2025</h2>
@@ -125,13 +119,13 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
-          <nav class="plate-nav" aria-label="Plates, previous and next">
-            <a class="button" href="#plate-2">Plate 2<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+          <nav class="chart-nav" aria-label="Charts, previous and next">
+            <a class="button" href="#chart-2">Chart 2<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
           </nav>
         </footer>
       </section>
 
-      <section class="view plate panel" id="chart2" aria-labelledby="chart2-title" hidden>
+      <section class="view chart-screen panel" id="chart2" aria-labelledby="chart2-title" hidden>
         <header class="panel-head">
           <div>
             <h2 id="chart2-title" tabindex="-1">Score Change from 2019 to 2025</h2>
@@ -156,14 +150,14 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · surveys 2019–2025</span>
-          <nav class="plate-nav" aria-label="Plates, previous and next">
-            <a class="button" href="#plate-1"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Plate 1</a>
-            <a class="button" href="#plate-3">Plate 3<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+          <nav class="chart-nav" aria-label="Charts, previous and next">
+            <a class="button" href="#chart-1"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Chart 1</a>
+            <a class="button" href="#chart-3">Chart 3<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
           </nav>
         </footer>
       </section>
 
-      <section class="view plate panel" id="chart3" aria-labelledby="chart3-title" hidden>
+      <section class="view chart-screen panel" id="chart3" aria-labelledby="chart3-title" hidden>
         <header class="panel-head">
           <div>
             <h2 id="chart3-title" tabindex="-1">Factors of Happiness in 2025</h2>
@@ -183,8 +177,8 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
-          <nav class="plate-nav" aria-label="Plates, previous and next">
-            <a class="button" href="#plate-2"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Plate 2</a>
+          <nav class="chart-nav" aria-label="Charts, previous and next">
+            <a class="button" href="#chart-2"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Chart 2</a>
             <a class="button" href="#map">Back to the map<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
           </nav>
         </footer>

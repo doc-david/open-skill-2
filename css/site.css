@@ -1,4 +1,4 @@
-/* field guide (david's pick): map paper behind numbered plates, one chart each, in forest ink.
+/* field guide (david's pick): map paper behind numbered charts, one chart each, in forest ink.
    colors, type and spacing come from tokens.css, which is generated from scripts/figma-variables.json.
    one deliberate light theme, so every color is set explicitly. */
 :root {
@@ -59,8 +59,8 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   border-bottom: 1.5px solid var(--color-hud-edge);
 }
 .hud :focus-visible, .map-ground :focus-visible { outline-color: var(--color-highlighter); }
-.hud-plates { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
-.hud-plates[hidden] { display: none; }
+.hud-charts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.hud-charts[hidden] { display: none; }
 .hud-count { font-size: 14px; font-weight: 700; white-space: nowrap; }
 .hud-dots { display: flex; margin-inline: -8px; }
 .hud-dots a {
@@ -227,34 +227,9 @@ h1 {
 }
 .stop-svg { display: block; }
 .stop-svg .lit { fill: var(--color-highlighter); }
-.stop-svg .plate-fill { fill: var(--color-bg-primary); }
-.explored {
-  position: absolute;
-  top: 36px;
-  right: 12px;
-  padding: 4px 8px;
-  border: 2px solid var(--color-stamp);
-  border-radius: 3px;
-  background: var(--color-tooltip-bg);
-  color: var(--color-stamp);
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.2;
-  transform: rotate(-8deg);
-}
-.explored[hidden] { display: none; }
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+.stop-svg .paper-fill { fill: var(--color-bg-primary); }
 .stop-text { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px 18px; }
-.stop-plate { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.stop-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 .stop-title { font-family: var(--font-display); font-size: 21px; font-weight: 800; line-height: 1.15; text-wrap: balance; }
 .stop-dek { font-family: var(--font-reading); font-size: 15px; line-height: 1.4; color: var(--color-text-secondary); }
 
@@ -297,21 +272,21 @@ h1 {
   .chips button:hover:not([aria-pressed="true"]) { border-color: var(--color-on-forest-primary); }
 }
 
-/* panels: the plates */
+/* panels: the charts */
 .panel {
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-text-primary);
   border-radius: var(--panel-radius);
-  box-shadow: 4px 4px 0 var(--color-plate-shadow);
+  box-shadow: 4px 4px 0 var(--color-panel-shadow);
   padding: clamp(20px, 3.2vw, 40px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-width: 0;
 }
-/* a plate fills the window under the hud: header, the chart takes what's left, footer.
+/* a chart fills the window under the hud: header, the chart takes what's left, footer.
    on a short window it keeps a usable height and the view scrolls instead */
-.plate {
+.chart-screen {
   height: calc(100% - 32px);
   min-height: 500px;
   margin: 14px 20px 18px;
@@ -423,8 +398,8 @@ h2 {
 .data-table { font-size: 14px; }
 .data-table summary { position: absolute; left: 0; top: calc(100% + 10px); list-style: none; }
 .data-table summary::-webkit-details-marker { display: none; }
-.plate:has(.data-table[open]) .chart-wrap { visibility: hidden; }
-.plate:has(.data-table[open]) .empty.on { visibility: visible; z-index: 3; }
+.chart-screen:has(.data-table[open]) .chart-wrap { visibility: hidden; }
+.chart-screen:has(.data-table[open]) .empty.on { visibility: visible; z-index: 3; }
 .data-table summary::before {
   content: "";
   width: 7px;
@@ -482,7 +457,7 @@ h2 {
   font-size: 13px;
   color: var(--color-text-secondary);
 }
-.plate-nav { display: flex; gap: 8px; margin-left: auto; }
+.chart-nav { display: flex; gap: 8px; margin-left: auto; }
 /* the message sits on the chart it explains. it never catches the pointer, so the chart stays hoverable */
 .empty {
   position: absolute;
@@ -519,7 +494,7 @@ h2 {
 .strong { font-weight: 600; }
 .ink { fill: var(--color-text-primary); }
 .muted { fill: var(--color-text-chart-muted); }
-/* a plate-colored halo lets a label sit on top of gridlines, like the label backings in figma */
+/* a paper-colored halo lets a label sit on top of gridlines, like the label backings in figma */
 .halo { paint-order: stroke; stroke: var(--color-bg-primary); stroke-width: 8px; stroke-linejoin: round; }
 
 .gridline { stroke: var(--color-line-grid); stroke-width: 1px; stroke-dasharray: 3 7; shape-rendering: crispEdges; }
@@ -576,12 +551,11 @@ h2 {
   .button { transition: transform 120ms var(--ease-out), background-color 160ms ease; }
   .button:active { transform: scale(0.97); }
   .view-in { animation: view-in 220ms var(--ease-out) backwards; }
-  .plate-from-right { animation: from-right 220ms var(--ease-out) backwards; }
-  .plate-from-left { animation: from-left 220ms var(--ease-out) backwards; }
+  .chart-from-right { animation: from-right 220ms var(--ease-out) backwards; }
+  .chart-from-left { animation: from-left 220ms var(--ease-out) backwards; }
   .stop.intro { animation: stop-in 300ms var(--ease-out) backwards; }
-  .stop.intro[data-plate="2"] { animation-delay: 60ms; }
-  .stop.intro[data-plate="3"] { animation-delay: 120ms; }
-  .explored.fresh { animation: stamp-in 240ms var(--ease-out) backwards; }
+  .stop.intro[data-chart="2"] { animation-delay: 60ms; }
+  .stop.intro[data-chart="3"] { animation-delay: 120ms; }
 }
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   .stop:hover { transform: translateY(-3px); box-shadow: 6px 7px 0 rgba(0, 0, 0, 0.32); }
@@ -591,7 +565,6 @@ h2 {
 @keyframes from-right { from { opacity: 0; transform: translateX(16px); } }
 @keyframes from-left { from { opacity: 0; transform: translateX(-16px); } }
 @keyframes stop-in { from { opacity: 0; transform: translateY(10px); } }
-@keyframes stamp-in { from { opacity: 0; transform: scale(1.3) rotate(-16deg); } }
 
 /* windows high contrast mode: keep the legend's colors and show which control is selected */
 @media (forced-colors: active) {
@@ -621,11 +594,11 @@ h2 {
   .view-map { height: auto; }
   .trail { grid-template-columns: minmax(0, 1fr); }
   .trail-line { display: none; }
-  .plate { height: auto; min-height: 0; margin: 10px; padding: 14px; grid-template-rows: auto auto auto; }
+  .chart-screen { height: auto; min-height: 0; margin: 10px; padding: 14px; grid-template-rows: auto auto auto; }
   .chart-row { position: static; }
   .chart-wrap, .chart { height: auto; }
   .chart svg { height: auto; }
-  .plate:has(.data-table[open]) .chart-wrap { visibility: visible; }
+  .chart-screen:has(.data-table[open]) .chart-wrap { visibility: visible; }
   .data-table summary { position: static; margin-top: 10px; }
   .table-scroll { position: static; margin-top: 8px; max-height: 440px; }
   .panel-foot { padding-left: 0; }

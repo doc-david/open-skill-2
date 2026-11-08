@@ -25,11 +25,11 @@ Let people explore the surveys through three charts, with tooltips that follow t
 - Course AI rule: AI may write code but doesn't decide what a chart is. David decides every chart, interaction and piece of copy; propose and ask.
 - Scope fence: one page (screens are views, not pages); no React/Svelte, Code Connect, shaders, Runway or phone chart layout.
 - Not built, and David's to reopen: Find a country, Surprise me, the passport, the tour, Figma vs D3 as a fourth stop.
-- Terminology: plates (the three charts), the map, stops; risers, decliners (the data key stays `fallers`), continent filter, Score (0-10), title-case chart titles, sentence-case deks.
+- Terminology: charts (David, Nov 7: no longer "plates"), the map, stops; risers, decliners (the data key stays `fallers`), continent filter, Score (0-10), title-case chart titles, sentence-case deks.
 
 ## Brand Commitments
 
-Field Guide (David's pick, Nov 6): forest `#18322A`, map paper `#F2F5EC`, plate `#FAFBF7`, highlighter `#F2C14E`; National Park, Source Serif 4 and IBM Plex Sans Condensed; the validated pigment palette for the factors; light plates on a forest map.
+Field Guide (David's pick, Nov 6): forest `#18322A`, map paper `#F2F5EC`, plate `#FAFBF7`, highlighter `#F2C14E`; National Park, Source Serif 4 and IBM Plex Sans Condensed; the validated pigment palette for the factors; light chart screens on a forest map.
 
 ## Evidence on Hand
 

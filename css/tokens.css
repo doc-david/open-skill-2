@@ -14,7 +14,7 @@
   --color-fill-hover: #18322a14;
   --color-tooltip-bg: #fffdf6;
   --color-tooltip-shadow: #18322a2e;
-  --color-plate-shadow: #18322a1f;
+  --color-panel-shadow: #18322a1f;
   --color-factor-gdp: #4b4fb8;
   --color-factor-social: #946400;
   --color-factor-life: #007598;
@@ -30,7 +30,6 @@
   --color-contour: #2c4d40;
   --color-chip-border: #5f7a6a;
   --color-icon-band: #eef2e6;
-  --color-stamp: #8c3b2e;
   --font-display: "National Park", "Trebuchet MS", sans-serif;
   --font-reading: "Source Serif 4", Georgia, serif;
   --font-ui: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;

@@ -76,6 +76,6 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
     if (event.key === "Escape") clearMarks();
   });
 
-  // leaving a plate takes its tooltip and emphasis with it
+  // leaving a chart takes its tooltip and emphasis with it
   window.addEventListener("hashchange", clearMarks);
 });
