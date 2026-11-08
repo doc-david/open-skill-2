@@ -26,7 +26,8 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 
 ## How to run and check
 - Serve: `python -m http.server 8000`, then open http://localhost:8000
-- Checks (the playbook's script checks, run them before every push): `pip install playwright pandas` and `python -m playwright install chromium`, then `python scripts/check_page.py --shots shots`. It passes 120/120 and exits 1 on any failure, including a crash, which it reports as "the checks ran to the end"
+- After editing any CSS or JS, run `python scripts/stamp_assets.py`: it tags each file in `index.html` with its content's version, so GitHub Pages' 10-minute caching can't pair a new page with an old file. The checks fail if a tag is stale
+- Checks (the playbook's script checks, run them before every push): `pip install playwright pandas` and `python -m playwright install chromium`, then `python scripts/check_page.py --shots shots`. It passes 121/121 and exits 1 on any failure, including a crash, which it reports as "the checks ran to the end"
 - The Figma vs D3 stills (`assets/`, `scripts/capture_d3.py`) are no longer on the page (David, Nov 7). Rerun the script only for fresh stills for the video or reflection
 - Preview bundle for claude.ai: `python scripts/bundle.py` writes `dist/world-happiness.html` (git-ignored)
 

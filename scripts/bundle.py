@@ -11,6 +11,8 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 html = (root / "index.html").read_text(encoding="utf-8")
+# the version tags are for the live site's caching; the bundle carries the files inline
+html = re.sub(r'\?v=[0-9a-f]+"', '"', html)
 
 # stylesheets inline
 html = re.sub(r'<link rel="stylesheet" href="(css/[^"]+)">',
