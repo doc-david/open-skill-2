@@ -126,7 +126,7 @@ Flat. Depth is a hard offset shadow with no blur, like a card laid on a map: cha
 
 - HUD: forest bar with a 1.5px darker edge, on the charts only. Holds the single `#continent` group, which keeps its setting while you're on the map.
 - Stop: a link with a numbered marker overlapping its top edge, an icon band, "Chart n", title and dek. Lifts 6px on a spring on hover while its marker swells to 1.12 and its shadow deepens (two shadow layers trading opacity, so nothing repaints), presses to 0.97. No trail line between the stops (David, Nov 7).
-- Chart footer: Data table, source, previous and next. An open table takes the chart's row and scrolls inside it.
+- Chart footer: Data table and source; no previous and next (David, Nov 7), since the HUD's dots and Back to the map move between views. An open table takes the chart's row and scrolls inside it.
 - Tooltip: note paper with a forest border, values first. Never catches the pointer. Chart 2's is a small table (David, Nov 7: more readable): Change since 2019 first, then the scores for 2019, the year you're on (marked) and 2025, values right-aligned. Chart 2's five end labels show it on hover as well as focus.
 
 Motion (David, Nov 7: bouncy, after a title screen he gave as a reference), all inside `prefers-reduced-motion: no-preference`. Springs are CSS `linear()` curves from `scripts/springs.py` (Apple-style duration and bounce), with the strong ease-out as the fallback:

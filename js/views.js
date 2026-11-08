@@ -56,8 +56,7 @@ const hills = [
 ];
 const cell = 10;            // design units per grid cell
 const cols = 1280 / cell + 1, rows = 800 / cell + 1;
-const step = 0.075;         // height between contour lines
-const levels = 16;
+const step = 0.06;          // height between contour lines, with no top or bottom: every height gets its line
 const ringPeriod = 7000;    // ms for a line to flow out to the next one's place
 const driftPeriod = 80000;  // ms for the hills and the map to drift there and back
 const heights = new Float64Array(cols * rows);
@@ -70,7 +69,7 @@ contours.frames = 0;        // frames drawn, for the checks
 function fillHeights(phase) {
   for (let i = 0; i < cols; i++) across[i] = 0.04 * Math.sin(i * cell / 97 + phase);
   for (let j = 0; j < rows; j++) down[j] = Math.cos(j * cell / 83 - phase);
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) heights[j * cols + i] = across[i] * down[j];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) heights[j * cols + i] = across[i] * down[j] + 0.5 * i / (cols - 1) + 0.3 * j / (rows - 1);
   for (const [hx, hy, spread, height, offset] of hills) {
     const cx = hx + 40 * Math.sin(phase + offset), cy = hy + 30 * Math.cos(phase * 0.8 + offset);
     const k = 1 / (2 * spread * spread);
@@ -87,24 +86,22 @@ function fillHeights(phase) {
 // marching squares: for every grid cell, each line whose height falls between the cell's corners
 // crosses two of its edges (four at a saddle), found by interpolating along them
 function traceLevels(flow) {
-  // three paths: the lowest line (fading out), every line in between, and the newest (fading in)
-  const paths = [new Path2D(), new Path2D(), new Path2D()];
+  // one path for every line: the heights have no top or bottom, so each step of height has a line,
+  // and lowering them all by one step brings back the same set, so the loop has no seam
+  const path = new Path2D();
   const crossings = [];
   for (let j = 0; j < rows - 1; j++) {
     for (let i = 0; i < cols - 1; i++) {
       const a = heights[j * cols + i], b = heights[j * cols + i + 1];
       const c = heights[(j + 1) * cols + i + 1], d = heights[(j + 1) * cols + i];
       const lo = Math.min(a, b, c, d), hi = Math.max(a, b, c, d);
-      const first = Math.max(0, Math.ceil(lo / step - 1 + flow));
-      const last = Math.min(levels - 1, Math.floor(hi / step - 1 + flow));
-      for (let level = first; level <= last; level++) {
-        const t = (level + 1 - flow) * step;
+      for (let k = Math.ceil(lo / step + flow); k <= hi / step + flow; k++) {
+        const t = (k - flow) * step;
         crossings.length = 0;
         if ((a < t) !== (b < t)) crossings.push(i + (t - a) / (b - a), j);
         if ((b < t) !== (c < t)) crossings.push(i + 1, j + (t - b) / (c - b));
         if ((d < t) !== (c < t)) crossings.push(i + (t - d) / (c - d), j + 1);
         if ((a < t) !== (d < t)) crossings.push(i, j + (t - a) / (d - a));
-        const path = paths[level === 0 ? 0 : level === levels - 1 ? 2 : 1];
         for (let n = 0; n + 3 < crossings.length; n += 4) {
           path.moveTo(crossings[n], crossings[n + 1]);
           path.lineTo(crossings[n + 2], crossings[n + 3]);
@@ -112,7 +109,7 @@ function traceLevels(flow) {
       }
     }
   }
-  return paths;
+  return path;
 }
 
 function drawContours(time) {
@@ -123,10 +120,10 @@ function drawContours(time) {
   if (contours.height !== Math.round(h * dpr)) contours.height = Math.round(h * dpr);
   const phase = 2 * Math.PI * time / driftPeriod;
   fillHeights(phase);
-  // flow runs 0 to 1 over each period, lowering every line one step, so each moves out to the next
-  // one's place. the newest line at the top fades in and the lowest fades out, so the loop has no seam
+  // flow runs 0 to 1 over each period, lowering every line one step, so each moves out and down to
+  // the next one's place
   const flow = (time / ringPeriod) % 1;
-  const paths = traceLevels(flow);
+  const lines = traceLevels(flow);
   const ctx = contours.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
@@ -139,29 +136,53 @@ function drawContours(time) {
   ctx.translate(-640 / cell, -400 / cell);
   ctx.lineWidth = 1.5 / (k * cell);
   ctx.strokeStyle = contourColor;
-  [1 - flow, 1, flow].forEach((alpha, n) => {
-    ctx.globalAlpha = alpha;
-    ctx.stroke(paths[n]);
-  });
+  ctx.stroke(lines);
   contours.frames++;
 }
 
+// the landscape keeps its own clock, which only runs while it moves, so after a pause, a chart or a
+// hidden tab it carries on from exactly where it stopped
 let contourFrame = null;
+let contourClock = ringPeriod / 2;
+let lastFrame = null;
 function flowContours(time) {
-  drawContours(time);
+  if (lastFrame !== null) contourClock += Math.min(time - lastFrame, 100);
+  lastFrame = time;
+  drawContours(contourClock);
   contourFrame = requestAnimationFrame(flowContours);
 }
 
-// starts or stops the flow to match what's on screen; a still map is drawn once, half a flow in
+// the map's pause button (david, nov 7). a paused map stays paused when you come back, in this browser
+const motionToggle = document.getElementById("motion-toggle");
+let contoursPaused = false;
+try { contoursPaused = localStorage.getItem("map-motion") === "paused"; } catch (error) { /* storage blocked: start moving */ }
+
+function labelMotionToggle() {
+  motionToggle.querySelector(".motion-label").textContent = contoursPaused ? "Play motion" : "Pause motion";
+  motionToggle.querySelector(".pause-icon").hidden = contoursPaused;
+  motionToggle.querySelector(".play-icon").hidden = !contoursPaused;
+}
+motionToggle.addEventListener("click", () => {
+  contoursPaused = !contoursPaused;
+  try { localStorage.setItem("map-motion", contoursPaused ? "paused" : "playing"); } catch (error) { /* not remembered */ }
+  labelMotionToggle();
+  updateContours();
+});
+labelMotionToggle();
+
+// starts or stops the flow to match what's on screen; a still map is drawn once, where it stopped
 function updateContours() {
   const onMap = !viewOf(0).hidden;
-  const moving = onMap && !document.hidden && !reduceMotionQuery.matches;
-  if (moving && contourFrame === null) contourFrame = requestAnimationFrame(flowContours);
+  const moving = onMap && !document.hidden && !reduceMotionQuery.matches && !contoursPaused;
+  if (moving && contourFrame === null) {
+    lastFrame = null;
+    contourFrame = requestAnimationFrame(flowContours);
+  }
   if (!moving && contourFrame !== null) {
     cancelAnimationFrame(contourFrame);
     contourFrame = null;
   }
-  if (onMap && !moving) drawContours(ringPeriod / 2);
+  if (onMap && !moving) drawContours(contourClock);
 }
 document.addEventListener("visibilitychange", updateContours);
 reduceMotionQuery.addEventListener("change", updateContours);

@@ -177,6 +177,26 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
   gap: clamp(20px, 4vh, 40px);
 }
 .masthead { display: grid; }
+/* the map's pause button: the moving background starts on its own and never ends, so it can be
+   stopped (wcag 2.2.2). top right of the map's content, first in the tab order */
+.motion-toggle {
+  position: absolute;
+  top: clamp(12px, 2.5vh, 24px);
+  right: max(20px, env(safe-area-inset-right, 0px));
+  z-index: 1;
+  border-color: var(--color-on-forest-secondary);
+  background: transparent;
+  color: var(--color-on-forest-primary);
+}
+.motion-icon { flex: none; fill: currentColor; }
+.motion-icon[hidden] { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .motion-toggle:hover { background: var(--color-contour); }
+}
+/* with reduced motion nothing moves, so there's nothing to pause */
+@media (prefers-reduced-motion: reduce) {
+  .motion-toggle { display: none; }
+}
 h1 .word { display: inline-block; white-space: nowrap; }
 h1 .letter { display: inline-block; }
 .kicker {
@@ -484,7 +504,6 @@ h2 {
   font-size: 13px;
   color: var(--color-text-secondary);
 }
-.chart-nav { display: flex; gap: 8px; margin-left: auto; }
 /* the message sits on the chart it explains. it never catches the pointer, so the chart stays hoverable */
 .empty {
   position: absolute;
@@ -664,6 +683,7 @@ h2 {
   .view-map { height: auto; }
   .trail { grid-template-columns: minmax(0, 1fr); }
   .chart-screen { height: auto; min-height: 0; margin: 10px; padding: 14px; grid-template-rows: auto auto auto; }
+  .motion-toggle { position: static; align-self: flex-end; }
   .chart-row { position: static; }
   .chart-wrap, .chart { height: auto; }
   .chart svg { height: auto; }

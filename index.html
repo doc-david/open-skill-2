@@ -42,6 +42,11 @@
         <div class="map-ground">
           <canvas class="contours" aria-hidden="true"></canvas>
           <div class="map-inner">
+            <button type="button" class="button motion-toggle" id="motion-toggle">
+              <svg class="motion-icon pause-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="3.5" height="11" rx="1"/><rect x="9.5" y="2.5" width="3.5" height="11" rx="1"/></svg>
+              <svg class="motion-icon play-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" hidden><path d="M4 2.5v11l9.5-5.5z"/></svg>
+              <span class="motion-label">Pause motion</span>
+            </button>
             <header class="masthead">
               <p class="kicker">A field guide to <span id="country-count"></span> countries</p>
               <h1 tabindex="-1">World Happiness</h1>
@@ -118,9 +123,6 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
-          <nav class="chart-nav" aria-label="Charts, previous and next">
-            <a class="button" href="#chart-2">Chart 2<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
-          </nav>
         </footer>
       </section>
 
@@ -149,10 +151,6 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · surveys 2019–2025</span>
-          <nav class="chart-nav" aria-label="Charts, previous and next">
-            <a class="button" href="#chart-1"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Chart 1</a>
-            <a class="button" href="#chart-3">Chart 3<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
-          </nav>
         </footer>
       </section>
 
@@ -176,10 +174,6 @@
         </div>
         <footer class="panel-foot">
           <span>Source: World Happiness Report (Gallup World Poll) · 2025 survey (WHR 2026)</span>
-          <nav class="chart-nav" aria-label="Charts, previous and next">
-            <a class="button" href="#chart-2"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Chart 2</a>
-            <a class="button" href="#map">Back to the map<svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
-          </nav>
         </footer>
       </section>
     </main>

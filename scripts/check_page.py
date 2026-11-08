@@ -211,7 +211,8 @@ def run_checks(args, url, errors):
         page.mouse.move(5, 5)
         label = page.locator("#chart2 g:not([aria-hidden]) > .label").first
         named_country = label.evaluate("l => l.__data__.s.country")
-        label.hover()
+        spot = label.bounding_box()
+        page.mouse.move(spot["x"] + spot["width"] / 2, spot["y"] + spot["height"] / 2)
         page.wait_for_timeout(50)
         lit = page.evaluate("""c => [document.querySelector('.tooltip').classList.contains('visible'), document.querySelector('.tooltip .tooltip-title').textContent,
             [...document.querySelectorAll('#chart2 svg > g[aria-hidden] path')].find(p => p.__data__.country === c).getAttribute('stroke-width'),
@@ -397,11 +398,9 @@ def run_checks(args, url, errors):
         check("each stop opens its chart and focus lands on its heading; back returns to the map", all(got), got)
         got = [go(".stop[data-chart='1']") == at_chart(1), go(".hud-dots a[aria-label='Chart 3']") == at_chart(3), go(".hud-dots a[aria-label='Chart 2']") == at_chart(2)]
         check("the chart dots land on the right chart and mark it current", all(got), got)
-        got = [go("#chart2 .chart-nav a:has-text('Chart 1')") == at_chart(1), go("#chart1 .chart-nav a:has-text('Chart 2')") == at_chart(2),
-               go("#chart2 .chart-nav a:has-text('Chart 3')") == at_chart(3), go("#chart3 .chart-nav a:has-text('Chart 2')") == at_chart(2),
-               go("#chart2 .chart-nav a:has-text('Chart 3')") == at_chart(3), go("#chart3 .chart-nav a:has-text('Back to the map')") == at_map]
-        labels = nav.eval_on_selector_all(".chart-nav a", "a => a.map(x => x.textContent)")
-        check("previous and next land on the right view, with the handoff's labels", all(got) and labels == ["Chart 2", "Chart 1", "Chart 3", "Chart 2", "Back to the map"], (got, labels))
+        got = [go("#hud-back") == at_map, go(".stop[data-chart='3']") == at_chart(3), go(".hud-dots a[href='#chart-1']") == at_chart(1)]
+        footers = nav.eval_on_selector_all(".panel-foot", "f => f.map(x => [...x.querySelectorAll('a, nav')].length)")
+        check("the charts have no buttons at the bottom; the hud moves between views", all(got) and footers == [0, 0, 0], (got, footers))
         nav.go_back()
         nav.wait_for_timeout(100)
         back = nav.evaluate(where)
@@ -494,10 +493,10 @@ def run_checks(args, url, errors):
         chips = [f"continent-{c}" for c in ["all", "africa", "asia", "europe", "north-america", "oceania", "south-america"]]
         hud = ["hud-back", "#chart-1", "#chart-2", "#chart-3"] + chips
         wants = {
-            "map": ["#chart-1", "#chart-2", "#chart-3"],
-            "chart-1": hud + ["row"] * 20 + ["summary", "#chart-2"],
-            "chart-2": hud + ["view-risers", "view-decliners"] + ["label"] * 5 + ["summary", "#chart-1", "#chart-3"],
-            "chart-3": hud + ["row"] * 6 + ["summary", "#chart-2", "#map"],
+            "map": ["motion-toggle", "#chart-1", "#chart-2", "#chart-3"],
+            "chart-1": hud + ["row"] * 20 + ["summary"],
+            "chart-2": hud + ["view-risers", "view-decliners"] + ["label"] * 5 + ["summary"],
+            "chart-3": hud + ["row"] * 6 + ["summary"],
         }
         for view, want in wants.items():
             load(view)
@@ -742,13 +741,42 @@ def run_checks(args, url, errors):
         bg = browser.new_page(viewport={"width": 1920, "height": 945})
         bg.goto(url, wait_until="networkidle")
         bg.wait_for_timeout(600)
-        tiles = bg.evaluate("""() => { const c = document.querySelector('.contours'), ctx = c.getContext('2d'), out = [];
-            for (let ty = 0; ty < 3; ty++) for (let tx = 0; tx < 4; tx++) {
-                const w = Math.floor(c.width / 4), h = Math.floor(c.height / 3), px = ctx.getImageData(tx * w, ty * h, w, h).data;
-                let ink = 0; for (let i = 3; i < px.length; i += 4) if (px[i] > 40) ink++; out.push(ink); }
-            return out; }""")
+        tiles = bg.evaluate("""() => { const c = document.querySelector('.contours'), ctx = c.getContext('2d'), worst = [];
+            for (let k = 0; k < 16; k++) { drawContours(k * 5000 + 1234); const out = [];
+                for (let ty = 0; ty < 3; ty++) for (let tx = 0; tx < 4; tx++) {
+                    const w = Math.floor(c.width / 4), h = Math.floor(c.height / 3), px = ctx.getImageData(tx * w, ty * h, w, h).data;
+                    let ink = 0; for (let i = 3; i < px.length; i += 4) if (px[i] > 40) ink++; out.push(ink); }
+                worst.push(Math.min(...out)); }
+            return worst; }""")
+        check("the map's contours cover every part of the background at every moment of their drift", min(tiles) > 1000, tiles)
         trail = bg.evaluate("[document.querySelectorAll('.trail-line').length, [...document.querySelectorAll('#view-map *')].filter(e => getComputedStyle(e).borderTopStyle === 'dashed').length]")
-        check("the map's moving contours cover every part of the background, with no dotted trail line", min(tiles) > 300 and trail == [0, 0], (tiles, trail))
+        check("the map has no dotted trail line", trail == [0, 0], trail)
+        # the pause button stops the moving background where it is, says so, is remembered in this
+        # browser, and starts it again; it overlaps nothing on the map
+        frames_now = "document.querySelector('.contours').frames"
+        bg.click("#motion-toggle")
+        p0 = bg.evaluate(frames_now); bg.wait_for_timeout(400); p1 = bg.evaluate(frames_now)
+        paused = [p0 == p1, bg.text_content("#motion-toggle").strip(), bg.evaluate("[document.querySelector('.play-icon').hidden, document.querySelector('.pause-icon').hidden]")]
+        bg.reload(wait_until="networkidle")
+        bg.wait_for_timeout(300)
+        r0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
+        remembered = [bg.evaluate(frames_now) == r0, bg.text_content("#motion-toggle").strip()]
+        bg.click("#motion-toggle")
+        q0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
+        resumed = [bg.evaluate(frames_now) - q0 > 10, bg.text_content("#motion-toggle").strip()]
+        check("the pause button stops the map's motion where it is, is remembered, and starts it again",
+              paused == [True, "Play motion", [False, True]] and remembered == [True, "Play motion"] and resumed == [True, "Pause motion"], (paused, remembered, resumed))
+        clear = []
+        for size in ((1920, 945), (1280, 585), (390, 844)):
+            bg.set_viewport_size({"width": size[0], "height": size[1]})
+            bg.wait_for_timeout(150)
+            clear.append(bg.evaluate("""() => { const b = document.getElementById('motion-toggle').getBoundingClientRect();
+                return [...document.querySelectorAll('.kicker, h1, .stop')].every(e => { const r = e.getBoundingClientRect(); return r.right <= b.left || r.left >= b.right || r.bottom <= b.top || r.top >= b.bottom; }) && b.right <= innerWidth && b.top >= 0; }"""))
+        bg.set_viewport_size({"width": 1920, "height": 945})
+        check("the pause button overlaps nothing, from a 1080p screen to a phone", clear == [True, True, True], clear)
+        bg.evaluate("localStorage.clear()")
+        bg.reload(wait_until="networkidle")
+
         # the charts are drawn once the intro has played; a chart opened before then draws at once,
         # and laying the charts out in idle time never shows one
         early = [bg.evaluate("document.querySelectorAll('#chart1 .row').length")]
@@ -828,7 +856,7 @@ def run_checks(args, url, errors):
         quiet = [still.evaluate("document.querySelector('.contours').frames")]
         still.wait_for_timeout(400)
         quiet.append(still.evaluate("document.querySelector('.contours').frames"))
-        check("reduced motion draws the contours once and keeps them still", quiet[0] == quiet[1] and quiet[0] >= 1, quiet)
+        check("reduced motion draws the contours once and keeps them still, with no pause button to show", quiet[0] == quiet[1] and quiet[0] >= 1 and not still.locator("#motion-toggle").is_visible(), quiet)
         still.close()
         switched = browser.new_page(viewport={"width": 1280, "height": 720})
         switched.goto(url, wait_until="networkidle")
