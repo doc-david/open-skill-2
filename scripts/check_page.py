@@ -702,7 +702,7 @@ def run_checks(args, url, errors):
         refused = tampered.evaluate("[(document.querySelector('.error') || {}).textContent || '', document.querySelectorAll('.row').length, !!document.querySelector('.hud')]")
         tampered.evaluate("location.hash = '#plate-2'")
         tampered.wait_for_timeout(100)
-        check("changed data is refused, with a message and no errors after", "doesn’t match" in refused[0] and refused[1:] == [0, False] and not problems, (refused, problems))
+        check("changed data is refused, with a message for visitors and no errors after", "doesn’t match" in refused[0] and "Open Skill" not in refused[0] and refused[1:] == [0, False] and not problems, (refused, problems))
         tampered.close()
 
         # someone who asks for less motion gets no fades and no delays, including the hover grace

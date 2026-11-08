@@ -30,7 +30,7 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
   if (fingerprint(data) !== verified) {
     d3.select(".hud").remove();
     d3.select(".views").html("").append("p").attr("class", "error")
-      .text("This chart data doesn’t match Open Skill 1’s verified numbers, so the charts aren’t drawn.");
+      .text("This chart data doesn’t match the verified numbers, so the charts aren’t drawn.");
     return;
   }
 
