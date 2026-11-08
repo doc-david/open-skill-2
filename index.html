@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=National+Park:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
   <link rel="stylesheet" href="css/tokens.css?v=983fae31">
-  <link rel="stylesheet" href="css/site.css?v=7dc46a89">
+  <link rel="stylesheet" href="css/site.css?v=bfec18d0">
 </head>
 <body>
   <div class="app">
-    <div class="hud">
+    <div class="hud" hidden>
       <nav class="hud-charts" id="hud-charts" aria-label="Charts" hidden>
         <a class="button" id="hud-back" href="#map"><svg class="chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>Back to the map</a>
         <span class="hud-count" id="hud-count"></span>
@@ -48,7 +48,7 @@
           <div class="map-inner">
             <header class="masthead">
               <p class="kicker">A field guide to <span id="country-count"></span> countries</p>
-              <h1 tabindex="-1">World Happiness</h1>
+              <h1 tabindex="-1" aria-label="World Happiness"><span class="word" aria-hidden="true"><span class="letter" style="--letter: 0">W</span><span class="letter" style="--letter: 1">o</span><span class="letter" style="--letter: 2">r</span><span class="letter" style="--letter: 3">l</span><span class="letter" style="--letter: 4">d</span></span> <span class="word" aria-hidden="true"><span class="letter" style="--letter: 5">H</span><span class="letter" style="--letter: 6">a</span><span class="letter" style="--letter: 7">p</span><span class="letter" style="--letter: 8">p</span><span class="letter" style="--letter: 9">i</span><span class="letter" style="--letter: 10">n</span><span class="letter" style="--letter: 11">e</span><span class="letter" style="--letter: 12">s</span><span class="letter" style="--letter: 13">s</span></span></h1>
             </header>
 
             <nav class="trail" aria-label="Charts">
@@ -177,6 +177,18 @@
       </section>
     </main>
   </div>
+  <script>
+    // runs before the first paint, so the page never shows the wrong screen while its scripts load:
+    // a chart's address shows that chart and the hud; the map starts its intro. views.js takes over
+    (function () {
+      var chart = /^#(?:chart|plate)-([123])$/.exec(location.hash);
+      if (!chart) { document.getElementById("view-map").classList.add("intro"); return; }
+      document.getElementById("view-map").hidden = true;
+      document.getElementById("chart" + chart[1]).hidden = false;
+      document.querySelector(".hud").hidden = false;
+      document.getElementById("hud-charts").hidden = false;
+    })();
+  </script>
 
   <script src="js/vendor/d3.v7.9.0.min.js?v=f2094bbf"></script>
   <script src="js/format.js?v=9aa07f46"></script>
@@ -186,8 +198,8 @@
   <script src="js/chart1.js?v=4137ba6b"></script>
   <script src="js/chart2.js?v=fcdbe56c"></script>
   <script src="js/chart3.js?v=e7cf9365"></script>
-  <script src="js/landscape.js?v=1fce3e58"></script>
-  <script src="js/views.js?v=63b2c86a"></script>
-  <script src="js/main.js?v=cdae6245"></script>
+  <script src="js/landscape.js?v=8062969d"></script>
+  <script src="js/views.js?v=1fb81021"></script>
+  <script src="js/main.js?v=a52fadf0"></script>
 </body>
 </html>

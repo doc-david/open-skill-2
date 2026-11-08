@@ -76,7 +76,7 @@ function traceLevels(flow) {
 function drawContours(time) {
   const w = contours.clientWidth, h = contours.clientHeight;
   if (!w || !h) return;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   if (contours.width !== Math.round(w * dpr)) contours.width = Math.round(w * dpr);
   if (contours.height !== Math.round(h * dpr)) contours.height = Math.round(h * dpr);
   const phase = 2 * Math.PI * time / driftPeriod;
@@ -122,9 +122,9 @@ try { contoursPaused = localStorage.getItem("map-motion") === "paused"; } catch 
 // the icon shows what a press will do next
 function labelMotionToggle() {
   motionToggle.setAttribute("aria-pressed", String(contoursPaused));
-  motionToggle.title = contoursPaused ? "Play motion" : "Pause motion";
-  motionToggle.querySelector(".pause-icon").hidden = contoursPaused;
-  motionToggle.querySelector(".play-icon").hidden = !contoursPaused;
+  // svg elements have no hidden property, so the attribute itself has to change
+  motionToggle.querySelector(".pause-icon").toggleAttribute("hidden", contoursPaused);
+  motionToggle.querySelector(".play-icon").toggleAttribute("hidden", !contoursPaused);
 }
 motionToggle.addEventListener("click", () => {
   contoursPaused = !contoursPaused;
@@ -135,9 +135,13 @@ motionToggle.addEventListener("click", () => {
 labelMotionToggle();
 
 // starts or stops the flow to match what's on screen; a still map is drawn once, where it stopped
+// windows high contrast mode hides the contours (site.css), so there's nothing to move or pause
+const forcedColorsQuery = window.matchMedia("(forced-colors: active)");
+
 function updateContours() {
-  const onMap = !viewOf(0).hidden;
-  const moving = onMap && !document.hidden && !reduceMotionQuery.matches && !contoursPaused;
+  const map = viewOf(0);
+  const onMap = Boolean(map) && !map.hidden;
+  const moving = onMap && !document.hidden && !reduceMotionQuery.matches && !forcedColorsQuery.matches && !contoursPaused;
   if (moving && contourFrame === null) {
     lastFrame = null;
     drawContours(contourClock);
@@ -151,4 +155,5 @@ function updateContours() {
 }
 document.addEventListener("visibilitychange", updateContours);
 reduceMotionQuery.addEventListener("change", updateContours);
+forcedColorsQuery.addEventListener("change", updateContours);
 window.addEventListener("resize", () => { if (contourFrame === null) updateContours(); });

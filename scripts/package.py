@@ -5,7 +5,7 @@ builds the folder to send to people who want to run the site on their own comput
   dist/world-happiness/
     World Happiness.html   one file with everything inside: double-click it, no server or internet
                            needed (only the web fonts need a connection; without one, system fonts stand in)
-    index.html, css/, js/, data/   the source, exactly as on the live site
+    source/                the source, exactly as on the live site: index.html, css/, js/, data/
     README.md              how to open it and what's inside
   dist/world-happiness.zip
 
@@ -31,7 +31,7 @@ out.mkdir(parents=True)
 
 # the source, copied byte for byte; index.html loses its cache version tags, which only matter online
 for name in SOURCE:
-    target = out / name
+    target = out / "source" / name
     target.parent.mkdir(parents=True, exist_ok=True)
     data = (root / name).read_bytes()
     if name == "index.html":
@@ -52,6 +52,11 @@ page = page.replace('<script src="js/format.js"></script>', blocks + '<script sr
 page = re.sub(r'<script src="(js/[^"]+)"></script>',
               lambda m: "<script>\n" + (root / m.group(1)).read_text(encoding="utf-8").replace("</script", "<\\/script") + "\n</script>", page)
 assert "src=\"js/" not in page and "href=\"css/" not in page, "something was left outside the single file"
+# the web fonts load without holding up the page, so a network that stalls instead of failing (a cafe's
+# sign-in page, say) can't keep the file blank; system fonts stand in until they arrive, if ever
+font = re.search(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com/[^"]+)">', page)
+assert font, "the font link moved"
+page = page.replace(font.group(0), f'<link rel="stylesheet" href="{font.group(1)}" media="print" onload="this.media=\'all\'">')
 (out / "World Happiness.html").write_text(page, encoding="utf-8")
 
 (out / "README.md").write_text("""# World Happiness
@@ -65,9 +70,8 @@ Pick a chart from the map, hover or tab through the marks, and filter all three 
 **Double-click `World Happiness.html`.** It's the whole site in one file and works without a server
 or an internet connection. Offline, your system's fonts stand in for the site's web fonts.
 
-**Or run the source** in `index.html`, `css/`, `js/` and `data/`. Browsers won't let a page read its
-data files straight from your disk, so serve the folder first. With Python installed, open a terminal
-in this folder and run:
+**Or run the source** in `source/`. Browsers won't let a page read its data files straight from your
+disk, so serve that folder first. With Python installed, open a terminal in `source/` and run:
 
 ```
 python -m http.server 8000
@@ -75,7 +79,7 @@ python -m http.server 8000
 
 then go to http://localhost:8000.
 
-## What's inside
+## What's inside `source/`
 
 - `index.html`: the page: a map with three stops, and one screen per chart
 - `css/tokens.css`: the colors, type and sizes; `css/site.css`: the layout and the motion

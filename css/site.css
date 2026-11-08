@@ -206,8 +206,8 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
 @media (hover: hover) and (pointer: fine) {
   .motion-toggle:hover:not([aria-pressed="true"]) { background: var(--color-contour); }
 }
-/* with reduced motion nothing moves, so there's nothing to pause */
-@media (prefers-reduced-motion: reduce) {
+/* with reduced motion nothing moves, and high contrast mode hides the contours, so there's nothing to pause */
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
   .motion-toggle { display: none; }
 }
 h1 .word { display: inline-block; white-space: nowrap; }

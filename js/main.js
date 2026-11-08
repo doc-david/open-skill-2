@@ -26,6 +26,17 @@ function fingerprint(data) {
   ].join(" ");
 }
 
+// the data couldn't be read: say so instead of leaving empty charts. a page opened straight from the
+// disk can't read its own data files, so it says what to do instead
+function loadFailed() {
+  const fromDisk = location.protocol === "file:";
+  d3.select(".hud").remove();
+  d3.select(".views").html("").append("p").attr("class", "error")
+    .text(fromDisk
+      ? "This page can’t read its data files when it’s opened straight from your disk. Open World Happiness.html instead, or serve this folder as the README explains."
+      : "The chart data couldn’t load, so the charts aren’t drawn. Try reloading the page.");
+}
+
 Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) => {
   if (fingerprint(data) !== verified) {
     d3.select(".hud").remove();
@@ -109,4 +120,4 @@ Promise.all([load("chart-data"), load("continents")]).then(([data, continents]) 
     window.addEventListener("hashchange", build);
     setTimeout(() => idle(build, { timeout: 1000 }), 1700);
   }
-});
+}, loadFailed);

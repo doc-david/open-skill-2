@@ -42,30 +42,6 @@ views.addEventListener("animationend", event => {
   }
 });
 
-// the title's letters each get a box of their own, so the intro can pop them one at a time. the
-// heading keeps its words as its name, so a screen reader reads "World Happiness", not letters
-function splitTitle() {
-  const h1 = document.querySelector(".masthead h1");
-  const text = h1.textContent;
-  h1.setAttribute("aria-label", text);
-  h1.textContent = "";
-  let n = 0;
-  text.split(" ").forEach((word, w) => {
-    if (w) h1.append(" ");
-    const box = document.createElement("span");
-    box.className = "word";
-    box.setAttribute("aria-hidden", "true");
-    for (const ch of word) {
-      const letter = document.createElement("span");
-      letter.className = "letter";
-      letter.style.setProperty("--letter", n++);
-      letter.textContent = ch;
-      box.append(letter);
-    }
-    h1.append(box);
-  });
-}
-
 // how a view arrives. the rules are in css, inside prefers-reduced-motion: no-preference, so people
 // who ask for less motion get none. a hidden element replays its animation when it shows again,
 // so every motion class comes off before the next view opens.
@@ -114,7 +90,6 @@ function renameOldHash() {
 if (document.fonts) {
   for (const weight of [400, 500, 600, 700]) document.fonts.load(`${weight} 16px "IBM Plex Sans Condensed"`);
 }
-splitTitle();
 renameOldHash();
 let route = routeOf(location.hash);
 showView(route);

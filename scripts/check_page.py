@@ -47,6 +47,7 @@ def serve():
         def log_message(self, *args):
             pass
     handler = functools.partial(Quiet, directory=str(root))
+    http.server.ThreadingHTTPServer.request_queue_size = 64  # the default 5 refused connections under load
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
@@ -769,7 +770,8 @@ def run_checks(args, url, errors):
         bg.click("#motion-toggle")
         p0 = bg.evaluate(frames_now); bg.wait_for_timeout(400); p1 = bg.evaluate(frames_now)
         pressed = "document.getElementById('motion-toggle').getAttribute('aria-pressed')"
-        paused = [p0 == p1, bg.evaluate(pressed), bg.evaluate("[document.querySelector('.play-icon').hidden, document.querySelector('.pause-icon').hidden]")]
+        icons = "[getComputedStyle(document.querySelector('.play-icon')).display, getComputedStyle(document.querySelector('.pause-icon')).display]"
+        paused = [p0 == p1, bg.evaluate(pressed), bg.evaluate(icons)]
         bg.reload(wait_until="networkidle")
         bg.wait_for_timeout(300)
         r0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
@@ -778,7 +780,7 @@ def run_checks(args, url, errors):
         q0 = bg.evaluate(frames_now); bg.wait_for_timeout(400)
         resumed = [bg.evaluate(frames_now) - q0 > 10, bg.evaluate(pressed)]
         check("the pause button stops the map's motion where it is, is remembered, and starts it again",
-              paused == [True, "true", [False, True]] and remembered == [True, "true"] and resumed == [True, "false"], (paused, remembered, resumed))
+              paused == [True, "true", ["block", "none"]] and remembered == [True, "true"] and resumed == [True, "false"] and bg.evaluate(icons) == ["none", "block"], (paused, remembered, resumed, bg.evaluate(icons)))
         toggle = bg.evaluate("""() => { const t = document.getElementById('motion-toggle'), r = t.getBoundingClientRect(), g = document.querySelector('.map-ground').getBoundingClientRect();
             return [t.getAttribute('aria-label'), Math.round(r.width), Math.round(g.right - r.right), Math.round(r.top - g.top), t.textContent.trim()]; }""")
         named_toggle = bg.get_by_role("button", name="Pause motion", exact=True).count()
@@ -819,6 +821,42 @@ def run_checks(args, url, errors):
             return [getComputedStyle(s).transitionProperty.includes('box-shadow'), getComputedStyle(s).boxShadow, getComputedStyle(s, '::before').opacity, getComputedStyle(s, '::after').opacity]; }""")
         check("a lifted stop swaps its shadow by opacity alone", shadows == [False, "none", "0", "1"], shadows)
         lifted.close()
+
+        # before the scripts arrive, the first paint is already the right screen: the map with no hud and
+        # its intro running, or a chart's address showing that chart with its hud
+        firsts = []
+        for start in ("", "#chart-2"):
+            slow = browser.new_page(viewport={"width": 1280, "height": 720})
+            held = []
+            slow.route("**/js/**", lambda route: held.append(route))  # the scripts never arrive
+            slow.goto(f"{url}{start}", wait_until="commit")
+            slow.wait_for_timeout(500)
+            firsts.append(slow.evaluate("""() => [document.querySelector('.hud').hidden, [...document.querySelectorAll('.view')].filter(v => !v.hidden).map(v => v.id),
+                document.getElementById('view-map').classList.contains('intro'), typeof showView, document.querySelectorAll('h1 .letter').length]"""))
+            for route in held:
+                route.abort()
+            slow.close()
+        check("before its scripts load, the page already shows the right screen, with no hud on the map",
+              firsts == [[True, ["view-map"], True, "undefined", 14], [False, ["chart2"], False, "undefined", 14]], firsts)
+
+        # windows high contrast mode hides the contours, so nothing draws and there's no toggle to press
+        hc = browser.new_context(forced_colors="active", viewport={"width": 1280, "height": 720}).new_page()
+        hc.goto(url, wait_until="networkidle")
+        hc.wait_for_timeout(300)
+        h0 = hc.evaluate("document.querySelector('.contours').frames")
+        hc.wait_for_timeout(400)
+        hc_state = [hc.evaluate("document.querySelector('.contours').frames") == h0, hc.locator("#motion-toggle").is_visible()]
+        check("high contrast mode draws no contours and shows no pause toggle", hc_state == [True, False], hc_state)
+        hc.close()
+
+        # data that can't load says so, instead of leaving empty charts
+        lost = browser.new_page(viewport={"width": 1280, "height": 720})
+        lost.route("**/data/*.json", lambda route: route.abort())
+        lost.goto(url, wait_until="networkidle")
+        lost.wait_for_timeout(300)
+        said = lost.evaluate("[(document.querySelector('.error') || {}).textContent || '', !!document.querySelector('.hud'), document.querySelectorAll('.chart svg *').length]")
+        check("data that can't load says so, with no empty charts left behind", "couldn’t load" in said[0] and said[1:] == [False, 0], said)
+        lost.close()
 
         # on a window short enough to scroll, a chart change keeps the scrollbar, so nothing jumps 15px
         tall = browser.new_page(viewport={"width": 1280, "height": 500})
