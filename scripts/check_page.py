@@ -100,7 +100,7 @@ def run_checks(args, url, errors):
     tags = re.findall(r'(?:href|src)="((?:css|js)/[^"?]+)(?:\?v=([0-9a-f]+))?"', page_text)
     unix = lambda path: (root / path).read_bytes().replace(b"\r\n", b"\n")
     stale = [path for path, v in tags if v != hashlib.sha256(unix(path)).hexdigest()[:8]]
-    check("every stylesheet and script is tagged with its current version", len(tags) == 12 and not stale, stale or len(tags))
+    check("every stylesheet and script is tagged with its current version", len(tags) == 13 and not stale, stale or len(tags))
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 1000})

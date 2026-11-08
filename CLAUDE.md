@@ -30,6 +30,7 @@ Handoff from the claude.ai "Open Skill" project chat (Nov 6, 2026) to Claude Cod
 - Checks (the playbook's script checks, run them before every push): `pip install playwright pandas` and `python -m playwright install chromium`, then `python scripts/check_page.py --shots shots`. It passes 121/121 and exits 1 on any failure, including a crash, which it reports as "the checks ran to the end"
 - The Figma vs D3 stills (`assets/`, `scripts/capture_d3.py`) are no longer on the page (David, Nov 7). Rerun the script only for fresh stills for the video or reflection
 - Preview bundle for claude.ai: `python scripts/bundle.py` writes `dist/world-happiness.html` (git-ignored)
+- Package to send people: `python scripts/package.py` writes `dist/world-happiness/` and `dist/world-happiness.zip` (git-ignored): the source, a single `World Happiness.html` that opens by double-click with no server, and a README. Rebuild it after any change before sending
 
 ## Refinement status (Nov 6)
 Done in Claude Code: the audit, the Figma vs D3 section (removed Nov 7), the approved polish, data tables, keyboard and high-contrast paths. David kept chart 2's grey-lines note as written and dropped the phone layout. Impeccable and frontend-design are installed in `~/.claude/skills` (skill only, no design hook).
